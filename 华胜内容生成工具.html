@@ -976,150 +976,30 @@
 // 华胜内容生成工具 - 配置中心
 // ═══════════════════════════════════════════════════════════════════
 
+function resolveApiBaseUrl() {
+  if (window.location.protocol === "file:") {
+    return "http://127.0.0.1:8090";
+  }
+  return window.location.origin;
+}
+
 const CONFIG = {
   // API配置
-  API_URL: "https://huasheng-content.haniaalrougui.workers.dev/",
+  API_URL: resolveApiBaseUrl(),
   ACCESS_PASSWORD: "huasheng2026",
-
-  // ═════════════════════════════════════════════════════════════════
-  // 【公司背景知识库】- 基于华胜知识库v1.0
-  // ═════════════════════════════════════════════════════════════════
-  COMPANY: {
-    slogan: "创百年华胜 造世界精品",
-    founded: "1993年",
-    history: "30余年",
-    positioning: "聚焦外用制剂领域，从小试到中试到规模量产，提供全链路交钥匙服务",
-    pilotBase: {
-      main: "12000平米开放式共享贴剂中试基地",
-      sub: "3000余平方米中药外用药中试转化平台",
-      cleanroom: "具备C级、D级洁净区条件",
-      equipment: "18套中试设备+10余种检验设备",
-      team: "技术人员10余人"
-    },
-    partnership: "与国内顶尖中药研究机构共建",
-    advisor: "侯惠民院士等行业专家顾问",
-    equipment: {
-      cipCleaning: "在线清洗站，清洗时间1小时（vs人工8小时），费用30元/次（vs人工800元）",
-      dailySavings: "每天至少节省21,170元",
-      flyingPlate: "飞式板压凝胶涂布机，110-650片/分钟",
-      sLine: "S线智能电眼追踪切片机，六列成品率94.12%"
-    }
-  },
 
   // ═════════════════════════════════════════════════════════════════
   // 【主题配置】
   // ═════════════════════════════════════════════════════════════════
   TOPICS: [
-    {
-      id: "pilot",
-      label: "中试服务",
-      desc: "12000平开放式共享基地·从小试到量产全链路",
-      hooks: {
-        pharma_all: ["90%的新药项目不是死在临床，是死在中试", "为什么中试失败的锅，总是研发部背？"],
-        tdds_pro: ["凝胶膏剂中试放大，黏度每升高10%，失败率增加35%", "同样的处方，实验室95分，中试直接不及格"],
-        executive: ["你熬了3个月的处方，放大到100公斤直接分层", "中试失败的锅，为什么总是研发部背？"],
-        management: ["自建中试车间1个亿投资，外包只要1/10", "项目延期6个月，隐性成本可能比中试费用还高"],
-        procurement: ["最低价中标的中试供应商，最后反而多花30%", "选择中试供应商的5个隐形风险点"],
-        compliance: ["中试批记录这3个问题，是现场核查的高频雷区", "从实验室到中试，数据链断裂的常见陷阱"],
-        executive_top: ["透皮给药赛道正在复制PD-1的故事，窗口期还剩多久？", "谁掌握了中试能力，谁就卡住了外用制剂的咽喉"]
-      }
-    },
-    {
-      id: "equipment",
-      label: "制药设备",
-      desc: "贴剂/凝胶膏剂生产线·服务工艺放大与稳定量产",
-      hooks: {
-        pharma_all: ["买设备便宜30万，运维贵100万，这笔账怎么算？", "为什么头部药企开始把进口设备换成国产？"],
-        tdds_pro: ["凝胶膏剂设备选错，换型成本够买半条生产线", "同样的产能，为什么大厂只要一半的设备？"],
-        executive: ["选型时只看价格，结果产能利用率只有40%", "贴剂生产线这3个参数，决定了你的换型时间"],
-        management: ["一条贴剂生产线300万，产能利用率只有40%，你算过账吗？", "买设备便宜30万，运维贵100万，这笔账怎么算？"],
-        procurement: ["设备供应商评估的5个隐形维度，价格表上看不到", "进口VS国产：什么时候选进口，什么时候选国产？"],
-        compliance: ["设备DQ/IQ/OQ验证不过，项目延期3个月", "设备变更没备案，现场核查被开缺陷"],
-        executive_top: ["设备国产化浪潮下，谁掌握了核心工艺？", "从设备供应商到整体解决方案，行业格局正在重塑"]
-      }
-    },
-    {
-      id: "material",
-      label: "包材产品",
-      desc: "压花膜/TPU弹力布/外包装袋·全系列配套",
-      hooks: {
-        pharma_all: ["包材选错，贴剂还没出厂就翘边", "为什么大厂都有自己的包材标准？"],
-        tdds_pro: ["换了3家包材供应商，终于找到了不翘边的秘诀", "包材和中试工艺不匹配，量产时问题爆发"],
-        executive: ["换了3家包材供应商，终于找到了不翘边的秘诀", "包材和中试工艺不匹配，量产时问题爆发"],
-        management: ["包材成本占贴剂总成本的多少？你可能算少了", "包材供应商评估，除了价格还要看什么？"],
-        procurement: ["包材采购的隐性成本，比单价高3倍", "如何评估包材供应商的真实产能？"]
-      }
-    },
-    {
-      id: "hospital",
-      label: "院内制剂",
-      desc: "医院药剂科备案·GMP合规·全程技术服务",
-      hooks: {
-        pharma_all: ["院内制剂备案，为什么80%的卡在这一步？", "医院自己做贴剂，比买成品省多少钱？"],
-        executive: ["院内制剂中试，和商业化生产有什么不同？", "备案资料准备，最容易被忽略的3个细节"],
-        management: ["院内制剂项目的ROI怎么算？", "医院备案流程，平均需要多少天？"],
-        procurement: ["院内制剂服务供应商怎么选？", "价格最低的供应商，合规风险最高？"],
-        compliance: ["院内制剂GMP要求，比想象更严格", "现场核查时，这5个问题必问"]
-      }
-    },
-    {
-      id: "strength",
-      label: "企业实力",
-      desc: "30余年深耕·整体解决方案·产业协同能力",
-      hooks: {
-        pharma_all: ["30余年持续深耕外用制剂领域，这家企业到底强在哪？", "为什么越来越多项目更看重整体解决方案能力，而不只看单台设备？"],
-        executive: ["华胜设备用了5年，和进口设备对比如何？", "从雄县机械厂到行业龙头，30年只做一件事"],
-        management: ["选择设备供应商，看历史还是看规模？", "30年设备厂家，比新厂贵但值"],
-        procurement: ["供应商评估，历史业绩占多少权重？", "为什么大客户都选择华胜？"],
-        compliance: ["华胜设备的验证包，审计一次过的秘诀", "30年品质沉淀，合规体系如何建立？"],
-        executive_top: ["从雄县机械厂到行业龙头，30余年只做一件事", "出口20多个国家，中国设备的国际认可度"]
-      }
-    },
-    {
-      id: "onestop",
-      label: "一站式采购",
-      desc: "设备+耗材+辅料+包材+中试·交钥匙工程",
-      hooks: {
-        pharma_all: ["找10家供应商，不如找1家做全链路的", "一站式采购，能省多少管理成本？"],
-        executive: ["分项采购vs一站式，哪个更适合你的项目？", "一站式服务的隐性价值，怎么算？"],
-        management: ["交钥匙工程vs分项采购，哪个更适合你？", "全链路服务，出了问题找谁？"],
-        procurement: ["供应商数量从10家减到1家，采购成本不降反升？", "一站式服务的隐性价值，怎么算？"]
-      }
-    },
-    {
-      id: "training",
-      label: "人才培训",
-      desc: "研究生实践基地·设备操作·工艺培训",
-      hooks: {
-        pharma_all: ["设备买回去不会用？培训比设备更重要", "研究生实践基地，产学研怎么结合？"],
-        tdds_pro: ["设备操作培训，为什么一定要有实操环节？", "从实验室到量产，需要哪些技能培训？"],
-        management: ["员工培训投入，多久能看到回报？", "校企合作，能解人才短缺之困吗？"]
-      }
-    },
-    {
-      id: "tdts",
-      label: "经皮知识",
-      desc: "透皮给药技术/行业趋势/专业解读",
-      hooks: {
-        pharma_all: ["2025年透皮给药迎来爆发，但90%的人没看懂政策信号", "贴剂 VS 凝胶膏剂，哪个才是未来？"],
-        tdds_pro: ["为什么你的贴剂贴到患者身上就翘边？", "凝胶膏剂黏度越高，反而越容易失败"],
-        executive: ["透皮给药中试，最容易踩的3个坑", "从实验室到临床，透皮贴剂要过几道关？"],
-        management: ["透皮给药市场，现在是入场的好时机吗？", "中试外包vs自建，透皮项目怎么选？"]
-      }
-    }
-  ],
-
-  // ═════════════════════════════════════════════════════════════════
-  // 【受众配置】
-  // ═════════════════════════════════════════════════════════════════
-  AUDIENCES: [
-    { id: "pharma_all", label: "医药行业从业者", note: "全职位覆盖 · 流量入口", layer: "泛内容" },
-    { id: "tdds_pro", label: "外用制剂研发人员", note: "透皮/凝胶膏剂/贴剂 · 精准受众", layer: "垂直层" },
-    { id: "executive", label: "研发执行层", note: "项目经理/研发经理 · 需求发起", layer: "执行层" },
-    { id: "management", label: "生产管理层", note: "CMO/生产总监 · 外包决策", layer: "管理层" },
-    { id: "procurement", label: "采购供应链", note: "采购总监/供应链经理 · 供应商选择", layer: "采购层" },
-    { id: "compliance", label: "质量合规层", note: "QA总监/注册经理 · 合规把关", layer: "合规层" },
-    { id: "executive_top", label: "高层决策者", note: "总经理/创始人/投资人 · 战略投资", layer: "决策层" }
+    { id: "pilot", label: "中试服务" },
+    { id: "equipment", label: "制药设备" },
+    { id: "material", label: "包材产品" },
+    { id: "hospital", label: "院内制剂" },
+    { id: "strength", label: "企业实力" },
+    { id: "onestop", label: "一站式采购" },
+    { id: "training", label: "人才培训" },
+    { id: "tdts", label: "经皮知识" }
   ],
 
   // ═════════════════════════════════════════════════════════════════
@@ -1234,19 +1114,6 @@ function getTopicIcon(id) {
     tdts: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'
   };
   return icons[id] || icons.pilot;
-}
-
-function getAudienceIcon(id) {
-  const icons = {
-    pharma_all: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
-    tdds_pro: '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>',
-    executive: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
-    management: '<path d="M12 20v-6M6 20V10M18 20V4"/>',
-    procurement: '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
-    compliance: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
-    executive_top: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
-  };
-  return icons[id] || icons.pharma_all;
 }
 
 function getContentTypeIcon(id) {
@@ -1494,197 +1361,6 @@ document.getElementById("briefInput")?.addEventListener("input", (e) => {
   renderChips();
 });
 
-// ═══════════════════════════════════════════════════════════════════
-// Prompt构建 - 核心逻辑
-// ═══════════════════════════════════════════════════════════════════
-
-function buildPrompt() {
-  const topic = CONFIG.TOPICS.find(t => t.id === state.topic);
-  const platform = CONFIG.PLATFORMS[state.platform];
-  const company = CONFIG.COMPANY;
-  const brief = state.brief.trim();
-
-  // 获取平台字数要求
-  const wordCount = platform.wordCount;
-
-  return `【角色设定】
-你是华胜品牌内容团队一员，代表华胜对外发声。华胜始创于1993年，30余年来持续深耕外用制剂领域，业务覆盖设备、中试转化、工艺放大与配套服务。中试基地是华胜能力体系中的关键模块之一，但不等于华胜全部业务。
-
-【华胜背景资料】（按相关性自然融入，不要每条都机械堆砌）
-- 品牌口号：${company.slogan}
-- 品牌积累：始创于${company.founded}，${company.history}持续深耕外用制剂领域
-- 中试基地：${company.pilotBase.main}，${company.pilotBase.cleanroom}
-- 品牌定位：${company.positioning}
-
-【内容生成参数】
-主题：${topic.label}
-视频素材/表达重点：${brief}
-平台：${platform.label}
-内容类型：${state.types.map(t => getContentTypeName(t)).join("、")}
-
-【品牌层级要求】
-- 默认主体是“华胜”这一整体品牌，不要默认把华胜写成只有中试基地
-- 当素材明确展示基地、车间、实验室、中试服务时，可以突出“中试基地”这一能力模块
-- 当素材更偏设备、包材、院内制剂、行业认知或一站式服务时，应回到华胜整体解决方案视角
-- 可以写“华胜具备中试转化能力”，不要写成“华胜只做中试”
-
-【平台风格要求 - 必须严格执行】
-- 节奏：${platform.rhythm}，${platform.hookInterval}必须有一个钩子
-- 句式：${platform.sentenceLength}
-- 情绪强度：${platform.emotion}
-- 语言风格：${platform.style}
-- 结构模板：${platform.structure}
-- 平台策略：${platform.tactics}
-
-【总口吻原则】
-- 优先服从当前平台的表达习惯，但整体保持专业、可信、克制的B端品牌气质
-- 可以更口语化，但不要油腻、浮夸、喊口号、过度像泛流量营销号
-- 可以有冲突感和传播感，但结论要落在专业判断、业务价值或解决方案上
-- 不要为了迎合平台牺牲真实性和专业度
-
-【字数要求】
-${Object.entries(wordCount).map(([type, count]) => `- ${getContentTypeName(type)}：${count}`).join("\n")}
-
-【素材理解要求】
-- 先根据“视频素材/表达重点”判断这条内容更适合讲设备展示、工艺能力、案例背书、基地实力还是行业认知
-- “主题”只用于限定业务范围，不代表固定标签、固定卖点或固定开场
-- 优先围绕素材真实内容组织表达，不要被固定卖点带偏
-- 同一条内容最多突出1-2个核心卖点
-- 没有明确数据来源，不要虚构具体金额、百分比、节省天数
-- 没有检索或资料支撑时，不要主动补充具体设备能力、洁净等级、清洗效率或成本节省数据
-- 如果素材更适合讲专业性、稳定性、合规性、自动化，就不要硬转成“省钱文案”
-
-【开场要求】
-- 开场必须从当前视频素材或表达重点中提炼，不要套用预设钩子库
-- 可以用问题、反常识、场景切入、结果切入，但必须和素材内容直接相关
-
-【立场要求】
-- 不说"我是专家"，说"华胜30余年经验发现..."
-- 不提具体技术团队成员姓名
-- 可以说"与国内顶尖研究机构共建"
-- 用"我们"代表华胜团队，不用"我"
-
-【品牌用词规范】
-- 必用："30余年"（不说30年）、"全链路"、"交钥匙工程"、"一站式"
-- 禁用："最好"、"第一"、"最强"（易违规）
-- 合规：不替客户做疗效声称，不说具体配方工艺
-
-【业务战略补充】（遇到相关主题时优先吸收）
-- 华胜对中试环节的定位：连接研发与产业化的关键节点，提供从实验室到商业化生产的桥梁服务
-- 三大业务抓手：设备端（制药中试设备的研发、制造与销售）；服务端（院内制剂的中试工艺开发与验证）；技术平台（建设中试技术服务平台，提供一站式解决方案）
-- 核心能力：工艺放大技术能力、质量控制与验证体系、法规合规与注册申报支持、项目管理与产业化转移能力
-- 表达导向：突出“降低放大风险、缩短转化周期、提升合规确定性、减少试错成本”
-- 合作表达：可写科研院所、医疗机构深度合作，可写示范项目、区域服务中心、生态协同，但不要虚构具体客户名称、项目数量和收益数据
-
-【本次主题优先切入角度】
-${buildStrategicFocus(topic.id)}
-
-【内容类型具体要求】
-${buildContentRequirements(platform, state.types)}
-
-【输出格式】
-严格按以下内容类型输出，每个模块用【】标注：
-${state.types.map(t => `【${getContentTypeName(t)}】`).join("\n")}
-`;
-}
-
-function buildStrategicFocus(topicId) {
-  const focusMap = {
-    pilot: [
-      "强调中试是连接研发与产业化的桥梁，不只讲场地和设备，更要讲工艺放大、验证和转移能力",
-      "可从失败成本、项目周期、放大风险、数据衔接四个角度切入",
-      "自然带出华胜开放式共享基地、一站式平台、示范项目承接能力"
-    ],
-    hospital: [
-      "重点突出院内制剂中试工艺开发、验证放大、备案配套、GMP/合规支持",
-      "强调医院药剂科从立项到备案再到稳定制备的全流程协同价值",
-      "表达上优先呈现“降低备案阻力、减少试制反复、提升落地确定性”"
-    ],
-    equipment: [
-      "不仅讲设备参数，还要强调设备如何服务中试放大、质量一致性和后续产业化",
-      "可从换型效率、验证友好、运维成本、规模复制能力切入"
-    ],
-    onestop: [
-      "强化技术平台思维，不只是一站式采购，而是设备、耗材、包材、中试服务协同",
-      "重点说明多环节协同能减少沟通损耗、缩短项目周期、降低系统性风险"
-    ],
-    strength: [
-      "企业实力不止是资历和客户数，还要体现标准化服务能力、技术沉淀和产业化转移能力",
-      "可适度映射中长期目标，如区域服务中心、生态协同、国际化视野，但不夸大"
-    ],
-    tdts: [
-      "行业解读要尽量落到中试转化和产业落地，不只谈趋势概念",
-      "优先建立“研发成功不等于中试成功”的认知，再导入华胜价值"
-    ]
-  };
-
-  const focus = focusMap[topicId] || [
-    "围绕“中试连接研发与产业化”来组织观点",
-    "自然体现华胜在设备、服务、平台三端协同的价值",
-    "优先输出对客户决策有帮助的判断，而不是泛泛宣传"
-  ];
-
-  return focus.map((item, index) => `${index + 1}. ${item}`).join("\\n");
-}
-
-function buildContentRequirements(platform, types) {
-  const reqs = [];
-
-  types.forEach(type => {
-    switch(type) {
-      case "oral":
-        reqs.push(`【口播脚本 - ${platform.label}版】
-- 字数：${platform.wordCount.oral}
-- 节奏：${platform.rhythm}，${platform.hookInterval}一个转折点
-- 开头：必须从钩子库中选一个强钩子开场
-- 中间：痛点放大+华胜解决方案（自然植入与当前主题相关的华胜背景和证据）
-- 结尾：分层引导（泛层关注/垂直层扣关键词/决策层私信）
-- 句式：${platform.sentenceLength}
-- 禁用：${platform.id === 'douyin' ? '长句、复杂从句、过多数据、低质喊麦式营销腔' : platform.id === 'zhihu' ? '情绪化表达、过于口语化' : '过于生硬的广告、泛流量号语气'}`);
-        break;
-      case "title":
-        reqs.push(`【视频标题 - ${platform.label}版】
-- 数量：3个备选
-- 字数：${platform.wordCount.title}
-- 要求：${platform.id === 'douyin' ? '数字+冲突+情绪词，如"90%死在这"、"血亏300万"' : platform.id === 'xiaohongshu' ? 'emoji+干货词+收藏引导' : platform.id === 'zhihu' ? '专业术语+完整问题，SEO友好' : '专业+洞察+价值承诺'}
-
-【封面文案】
-- 字数：10-15字
-- 风格：${platform.id === 'douyin' ? '大字报数字冲击' : '核心观点提炼'}
-- 必带：冲突感或悬念`);
-        break;
-      case "article":
-        reqs.push(`【图文正文 - ${platform.label}版】
-- 字数：${platform.wordCount.article}
-- 结构：${platform.structure.replace(/\d+秒/g, match => {
-          const seconds = parseInt(match);
-          if (platform.id === 'douyin') return seconds < 100 ? '50-100字' : '150-200字';
-          if (platform.id === 'zhihu') return seconds < 100 ? '100-150字' : '300-500字';
-          return '合理分配';
-        })}
-- 格式：${platform.id === 'xiaohongshu' ? '多用emoji分段，清单式排版' : platform.id === 'zhihu' ? '标题层级、数据标注来源' : '段落清晰，每段不超过3-5行'}
-- 植入：自然融入与当前主题相关的华胜背景资料（如30余年、基地能力、整体解决方案等）`);
-        break;
-      case "comment":
-        reqs.push(`【评论区置顶话术 - ${platform.label}版】
-- 字数：${platform.wordCount.comment}
-- 风格：${platform.id === 'douyin' ? '口语化、紧迫感、"评论区扣XX"' : platform.id === 'xiaohongshu' ? 'emoji、亲和、"整理好了"' : platform.id === 'zhihu' ? '专业、价值延续、深度引导' : '有温度、建立信任'}
-- 类型：资料引流型/互动争议型/参观预约型
-- 禁用：低质促单感、喊口号式互动诱导`);
-        break;
-      case "moments":
-        reqs.push(`【朋友圈文案 - ${platform.label}版】
-- 字数：${platform.wordCount.moments}
-- 结构：场景引入 → 反常识观点 → 华胜植入 → 分层引导
-- 人设：华胜团队一员，专业但不高冷
-- 配图建议：车间实拍/设备运行/客户案例/团队工作`);
-        break;
-    }
-  });
-
-  return reqs.join("\n\n");
-}
-
 function getContentTypeName(id) {
   const names = {
     oral: "口播脚本",
@@ -1706,18 +1382,14 @@ async function generate() {
   output.scrollIntoView({ behavior: "smooth", block: "start" });
 
   try {
-    const prompt = buildPrompt();
-    console.log("Generated Prompt:", prompt); // 调试用
-
-    const res = await fetch(CONFIG.API_URL, {
+    const res = await fetch(CONFIG.API_URL + "/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         topic: state.topic,
         brief: state.brief.trim(),
         platform: state.platform,
-        types: state.types,
-        prompt: prompt
+        types: state.types
       }),
     });
 
@@ -1826,7 +1498,7 @@ async function saveToFeishu() {
   btn.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></span>保存中...`;
 
   try {
-    const res = await fetch(CONFIG.API_URL + "?action=save", {
+    const res = await fetch(CONFIG.API_URL + "/?action=save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -1,6 +1,7 @@
 .DS_Store
 .wrangler/
 .venv/
+.server-cache/
 .rag-cache/
 __pycache__/
 node_modules/
@@ -9,3 +10,8 @@ node_modules/
 *.pyd
 .env
 .env.*
+!.env.example
+华胜知识库v1.0.md
+knowledge-data.generated.json
+AI自媒体内容生成工具PRD模版.md
+机械制造企业知识库RAG系统实践思考.md

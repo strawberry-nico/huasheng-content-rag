@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -13,21 +14,14 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-try:
-    from FlagEmbedding import BGEM3FlagModel, FlagReranker
-except ImportError as exc:  # pragma: no cover
-    BGEM3FlagModel = None
-    FlagReranker = None
-    IMPORT_ERROR = exc
-else:
-    IMPORT_ERROR = None
-
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_FILE = ROOT / "knowledge-data.generated.json"
-EMBED_CACHE = ROOT / ".rag-cache" / "embeddings.npz"
+EMBED_CACHE = ROOT / ".server-cache" / "embeddings.npz"
 DEFAULT_GENERATION_TOP_K = 3
 DEFAULT_RETRIEVE_TOP_K = 5
+DEFAULT_EMBED_BATCH_SIZE = 32
+DEFAULT_DASHSCOPE_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
 CONTENT_TYPE_NAMES = {
     "oral": "口播脚本",
@@ -37,22 +31,15 @@ CONTENT_TYPE_NAMES = {
     "moments": "朋友圈文案",
 }
 
-COMPANY = {
-    "slogan": "创百年华胜 造世界精品",
-    "history": "30余年",
-    "positioning": "聚焦外用制剂领域，从小试到中试到规模量产，提供全链路交钥匙服务",
-    "pilotBase": "12000平米开放式共享贴剂中试基地，具备C级、D级洁净区条件",
-}
-
 TOPICS = {
-    "pilot": {"label": "中试服务", "desc": "12000平开放式共享基地，从小试到量产全链路"},
-    "equipment": {"label": "制药设备", "desc": "贴剂/凝胶膏剂生产线"},
-    "material": {"label": "包材产品", "desc": "压花膜/TPU弹力布/外包装袋"},
-    "hospital": {"label": "院内制剂", "desc": "医院药剂科备案/GMP合规/全程技术服务"},
-    "strength": {"label": "企业实力", "desc": "30余年/370+药企/22%百强占比/出口20+国"},
-    "onestop": {"label": "一站式采购", "desc": "设备+耗材+辅料+包材+中试"},
-    "training": {"label": "人才培训", "desc": "研究生实践基地/设备操作/工艺培训"},
-    "tdts": {"label": "经皮知识", "desc": "透皮给药技术/行业趋势/专业解读"},
+    "pilot": {"label": "中试服务"},
+    "equipment": {"label": "制药设备"},
+    "material": {"label": "包材产品"},
+    "hospital": {"label": "院内制剂"},
+    "strength": {"label": "企业实力"},
+    "onestop": {"label": "一站式采购"},
+    "training": {"label": "人才培训"},
+    "tdts": {"label": "经皮知识"},
 }
 
 PLATFORMS = {
@@ -170,6 +157,10 @@ class RetrievedChunk(BaseModel):
     title: str
     headingPath: list[str]
     content: str
+    triggerCondition: str = ""
+    usageRule: str = ""
+    sourceModule: str = ""
+    confidence: str = ""
     topics: list[str]
     businessStages: list[str]
     scenes: list[str]
@@ -178,7 +169,7 @@ class RetrievedChunk(BaseModel):
     keywords: list[str]
     denseScore: float
     hybridScore: float
-    rerankScore: float
+    finalScore: float
 
 
 @dataclass
@@ -192,22 +183,7 @@ class RAGEngine:
         self.source = ""
         self.chunks: list[LoadedChunk] = []
         self.embeddings: np.ndarray | None = None
-        self.embedding_model = None
-        self.reranker = None
         self.ready = False
-
-    def use_rerank(self) -> bool:
-        return os.getenv("RAG_ENABLE_RERANK", "").strip().lower() in {"1", "true", "yes", "on"}
-
-    def ensure_models(self, *, need_reranker: bool = False) -> None:
-        if IMPORT_ERROR is not None:
-            raise RuntimeError(
-                "FlagEmbedding 未安装，无法启动 RAG 服务。请先安装 rag-service/requirements.txt"
-            ) from IMPORT_ERROR
-        if self.embedding_model is None:
-            self.embedding_model = BGEM3FlagModel("BAAI/bge-m3", use_fp16=False)
-        if need_reranker and self.reranker is None:
-            self.reranker = FlagReranker("BAAI/bge-reranker-v2-m3", use_fp16=False)
 
     def load_chunks(self) -> None:
         if not DATA_FILE.exists():
@@ -222,16 +198,19 @@ class RAGEngine:
                     item.get("title", ""),
                     " ".join(item.get("headingPath", [])),
                     item.get("content", ""),
+                    item.get("triggerCondition", ""),
+                    item.get("usageRule", ""),
+                    item.get("sourceModule", ""),
+                    item.get("confidence", ""),
                     " ".join(item.get("keywords", [])),
                 ]
             ).strip()
             self.chunks.append(LoadedChunk(raw=item, text=text))
 
     def build_index(self, force: bool = False) -> None:
-        self.ensure_models()
         self.load_chunks()
 
-        source_hash = str(DATA_FILE.stat().st_mtime_ns)
+        source_hash = self._build_source_hash()
         if not force and EMBED_CACHE.exists():
             cached = np.load(EMBED_CACHE, allow_pickle=True)
             if cached["source_hash"].item() == source_hash:
@@ -240,15 +219,7 @@ class RAGEngine:
                 return
 
         texts = [chunk.text for chunk in self.chunks]
-        encoded = self.embedding_model.encode(
-            texts,
-            batch_size=8,
-            max_length=4096,
-            return_dense=True,
-            return_sparse=False,
-            return_colbert_vecs=False,
-        )
-        dense = np.asarray(encoded["dense_vecs"], dtype=np.float32)
+        dense = self._embed_documents(texts)
         dense = self._normalize(dense)
         EMBED_CACHE.parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(EMBED_CACHE, embeddings=dense, source_hash=np.array(source_hash))
@@ -260,14 +231,7 @@ class RAGEngine:
             self.build_index()
 
         query_text = self._build_query_text(payload)
-        query_vec = self.embedding_model.encode(
-            [query_text],
-            batch_size=1,
-            max_length=2048,
-            return_dense=True,
-            return_sparse=False,
-            return_colbert_vecs=False,
-        )["dense_vecs"][0]
+        query_vec = self._embed_query(query_text)
         query_vec = self._normalize(np.asarray(query_vec, dtype=np.float32).reshape(1, -1))[0]
         inferred_scenes = self._infer_scenes(query_text.lower(), payload.platform)
         dense_scores = self.embeddings @ query_vec
@@ -282,29 +246,20 @@ class RAGEngine:
             candidates.append((idx, float(dense_scores[idx]), hybrid))
 
         candidates.sort(key=lambda item: item[2], reverse=True)
-        shortlist = candidates[: max(payload.top_k * 4, 12)]
-        if not shortlist:
+        shortlisted = candidates[: payload.top_k]
+        if not shortlisted:
             return []
 
-        rerank_enabled = self.use_rerank()
-        rerank_scores: list[float]
-        if rerank_enabled:
-            self.ensure_models(need_reranker=True)
-            pairs = [[query_text, self.chunks[idx].text] for idx, _, _ in shortlist]
-            rerank_scores = [float(score) for score in self.reranker.compute_score(pairs, normalize=True)]
-        else:
-            rerank_scores = [float(hybrid_score) for _, _, hybrid_score in shortlist]
-
         enriched: list[dict[str, Any]] = []
-        for (idx, dense_score, hybrid_score), rerank_score in zip(shortlist, rerank_scores):
+        for idx, dense_score, hybrid_score in shortlisted:
             raw = dict(self.chunks[idx].raw)
             raw["denseScore"] = round(float(dense_score), 6)
             raw["hybridScore"] = round(float(hybrid_score), 6)
-            raw["rerankScore"] = round(float(rerank_score), 6)
+            raw["finalScore"] = round(float(hybrid_score), 6)
             enriched.append(raw)
 
-        enriched.sort(key=lambda item: item["rerankScore"], reverse=True)
-        return enriched[: payload.top_k]
+        enriched.sort(key=lambda item: item["finalScore"], reverse=True)
+        return enriched
 
     def _build_query_text(self, payload: RetrievePayload) -> str:
         topic_label = TOPIC_LABELS.get(payload.topic, payload.topic or "")
@@ -347,6 +302,24 @@ class RAGEngine:
         norms = np.linalg.norm(matrix, axis=1, keepdims=True) + 1e-12
         return matrix / norms
 
+    def _build_source_hash(self) -> str:
+        payload = f"{DATA_FILE.stat().st_mtime_ns}:{resolve_embedding_model()}:{resolve_dashscope_base_url()}"
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    def _embed_documents(self, texts: list[str]) -> np.ndarray:
+        vectors: list[list[float]] = []
+        batch_size = int(os.getenv("EMBED_BATCH_SIZE", str(DEFAULT_EMBED_BATCH_SIZE)))
+        for start in range(0, len(texts), batch_size):
+            batch = texts[start:start + batch_size]
+            vectors.extend(request_embeddings(batch))
+        return np.asarray(vectors, dtype=np.float32)
+
+    def _embed_query(self, text: str) -> np.ndarray:
+        vectors = request_embeddings([text])
+        if not vectors:
+            raise RuntimeError("embedding API 未返回查询向量")
+        return np.asarray(vectors[0], dtype=np.float32)
+
 
 engine = RAGEngine()
 app = FastAPI(title="Huasheng Unified Backend", version="0.2.0")
@@ -364,7 +337,7 @@ def startup_event() -> None:
     try:
         engine.build_index(force=False)
     except Exception as exc:  # pragma: no cover
-        print(f"[backend] startup skipped: {exc}")
+        print(f"[server] startup skipped: {exc}")
 
 
 @app.get("/health")
@@ -375,7 +348,10 @@ def health() -> dict[str, Any]:
         "source": engine.source,
         "chunk_count": len(engine.chunks),
         "rag_cache": str(EMBED_CACHE),
-        "rerank_enabled": engine.use_rerank(),
+        "embedding_mode": "dashscope",
+        "dashscope_base_url": resolve_dashscope_base_url(),
+        "embedding_model": resolve_embedding_model(),
+        "generation_model": resolve_generation_model(),
     }
 
 
@@ -399,7 +375,7 @@ async def root_post(payload: GeneratePayload, action: str = Query(default="gener
         )
     )
     prompt = build_prompt(normalized, retrieved, engine.source)
-    content = await generate_with_kimi(prompt)
+    content = await generate_with_dashscope(prompt)
 
     feishu = {"saved": False}
     if has_feishu_config():
@@ -475,18 +451,23 @@ def build_prompt(payload: GeneratePayload, knowledge_items: list[dict[str, Any]]
     supplemental = f"【补充补充说明】\n{payload.rawInput}\n" if payload.rawInput else ""
     scene_prompt = build_scene_prompt(payload.topic)
     knowledge_section = "\n\n".join(
-        f"资料{idx + 1}｜{item['title']}\n路径：{' > '.join(item.get('headingPath', []))}\n相关度：{item.get('rerankScore', 0)}\n{item['content']}"
+        "\n".join(
+            part for part in [
+                f"资料{idx + 1}｜{item['title']}",
+                f"路径：{' > '.join(item.get('headingPath', []))}",
+                f"相关度：{item.get('finalScore', 0)}",
+                f"触发条件：{item.get('triggerCondition', '')}" if item.get("triggerCondition") else "",
+                f"使用规则：{item.get('usageRule', '')}" if item.get("usageRule") else "",
+                f"来源模块：{item.get('sourceModule', '')}" if item.get("sourceModule") else "",
+                f"引用置信度：{item.get('confidence', '')}" if item.get("confidence") else "",
+                item["content"],
+            ] if part
+        )
         for idx, item in enumerate(knowledge_items)
     )
 
     return f"""【角色设定】
-你是华胜品牌内容团队一员，代表华胜对外发声。华胜始创于1993年，{COMPANY['history']}持续深耕外用制剂领域，业务覆盖设备、中试转化、工艺放大与配套服务。中试基地是华胜能力体系中的关键模块之一，但不等于华胜全部业务。
-
-【华胜背景资料】（按相关性自然融入，不要每条都机械堆砌）
-- 品牌口号：{COMPANY['slogan']}
-- 品牌积累：始创于1993年，{COMPANY['history']}持续深耕外用制剂领域
-- 中试基地：{COMPANY['pilotBase']}
-- 品牌定位：{COMPANY['positioning']}
+你是华胜品牌内容团队一员，代表华胜对外发声。你的任务不是堆品牌口号，而是基于当前素材描述和知识库证据，生成可直接发布的成品内容。
 
 【内容生成参数】
 主题：{topic['label']}
@@ -499,6 +480,7 @@ def build_prompt(payload: GeneratePayload, knowledge_items: list[dict[str, Any]]
 - 当素材明确展示基地、车间、实验室、中试服务时，可以突出“中试基地”这一能力模块
 - 当素材更偏设备、包材、院内制剂、行业认知或一站式服务时，应回到华胜整体解决方案视角
 - 可以写“华胜具备中试转化能力”，不要写成“华胜只做中试”
+- 若召回资料未明确给出品牌历史、基地规模、洁净等级、合作机构、设备数量等事实，不要自行补全
 
 【平台风格要求 - 必须严格执行】
 - 节奏：{platform['rhythm']}，{platform['hookInterval']}必须有一个钩子
@@ -536,7 +518,6 @@ def build_prompt(payload: GeneratePayload, knowledge_items: list[dict[str, Any]]
 
 【知识使用规则】
 - 优先使用上方已召回资料中的事实、场景和表述
-- 若召回资料与硬编码背景资料冲突，以召回资料为准
 - 若召回资料没有覆盖某个数字、认证级别、设备名称或能力点，就不要自行补全
 - 引用数字时，优先解释业务意义，不要孤立堆数字
 
@@ -688,20 +669,20 @@ def get_comment_style(platform_id: str) -> str:
     return "有温度、建立信任"
 
 
-async def generate_with_kimi(prompt: str) -> str:
-    api_key = os.getenv("KIMI_API_KEY")
+async def generate_with_dashscope(prompt: str) -> str:
+    api_key = resolve_dashscope_api_key()
     if not api_key:
-        raise HTTPException(status_code=500, detail="KIMI_API_KEY 未配置")
+        raise HTTPException(status_code=500, detail="DASHSCOPE_API_KEY 未配置")
 
     async with httpx.AsyncClient(timeout=120) as client:
         response = await client.post(
-            "https://api.moonshot.cn/v1/chat/completions",
+            f"{resolve_dashscope_base_url()}/chat/completions",
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {api_key}",
             },
             json={
-                "model": os.getenv("KIMI_MODEL", "moonshot-v1-32k"),
+                "model": resolve_generation_model(),
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.85,
             },
@@ -711,7 +692,7 @@ async def generate_with_kimi(prompt: str) -> str:
                 detail = response.json()
             except Exception:
                 detail = response.text
-            raise HTTPException(status_code=500, detail=f"Kimi 请求失败: {detail}")
+            raise HTTPException(status_code=500, detail=f"DashScope 生成请求失败: {detail}")
         payload = response.json()
         return payload["choices"][0]["message"]["content"]
 
@@ -798,3 +779,44 @@ def map_content_type(content_type: str) -> str:
 
 def tokenize(text: str) -> list[str]:
     return list({m.group(0).lower() for m in re.finditer(r"[\u4e00-\u9fa5]{2,12}|[a-z0-9-]{2,}", text)})
+
+def resolve_dashscope_base_url() -> str:
+    return os.getenv("DASHSCOPE_BASE_URL", DEFAULT_DASHSCOPE_BASE_URL).rstrip("/")
+
+
+def resolve_embedding_model() -> str:
+    return os.getenv("DASHSCOPE_EMBEDDING_MODEL", "text-embedding-v4")
+
+
+def resolve_generation_model() -> str:
+    return os.getenv("DASHSCOPE_GENERATION_MODEL", "qwen-plus")
+
+
+def resolve_dashscope_api_key() -> str:
+    return os.getenv("DASHSCOPE_API_KEY", "")
+
+
+def request_embeddings(texts: list[str]) -> list[list[float]]:
+    api_key = resolve_dashscope_api_key()
+    if not api_key:
+        raise RuntimeError("DASHSCOPE_API_KEY 未配置")
+
+    headers = {"Content-Type": "application/json"}
+    headers["Authorization"] = f"Bearer {api_key}"
+
+    payload = {
+        "model": resolve_embedding_model(),
+        "input": texts,
+    }
+
+    with httpx.Client(timeout=120) as client:
+        response = client.post(f"{resolve_dashscope_base_url()}/embeddings", headers=headers, json=payload)
+        if response.status_code >= 400:
+            raise RuntimeError(f"DashScope embedding 请求失败: {response.status_code} {response.text}")
+        data = response.json()
+
+    if isinstance(data, dict) and isinstance(data.get("data"), list):
+        return [item["embedding"] for item in data["data"]]
+    if isinstance(data, dict) and isinstance(data.get("embeddings"), list):
+        return data["embeddings"]
+    raise RuntimeError("embedding API 返回格式无法识别")

@@ -2,10 +2,19 @@ import fs from "node:fs";
 import path from "node:path";
 
 const cwd = process.cwd();
+const CHUNK_MAX_LEN = 680;
+const SYNTHETIC_SECTION_TITLES = [
+  "【0】使用原则",
+  "【1】结构化知识标准",
+  "【2】华胜业务环节地图",
+  "【3】内容与客服共用场景地图",
+  "【5】优先拆分清单",
+  "【6】后续拆分建议",
+];
+
 const sourceCandidates = [
   process.env.KNOWLEDGE_SOURCE_FILE,
   "华胜知识库v1.0.md",
-  "华胜知识库v1.0 copy.md",
 ].filter(Boolean);
 const sourceFile = sourceCandidates.map((name) => path.join(cwd, name)).find((file) => fs.existsSync(file));
 
@@ -21,7 +30,6 @@ export const KNOWLEDGE_SOURCE = ${JSON.stringify(path.basename(sourceFile), null
 export const KNOWLEDGE_CHUNKS = ${JSON.stringify(chunks, null, 2)};
 `;
 
-fs.writeFileSync(path.join(cwd, "knowledge-data.generated.js"), output, "utf8");
 fs.writeFileSync(path.join(cwd, "knowledge-data.generated.json"), JSON.stringify({
   source: path.basename(sourceFile),
   generatedAt: new Date().toISOString(),
@@ -31,11 +39,14 @@ console.log(`Generated ${chunks.length} knowledge chunks from ${path.basename(so
 
 function buildChunks(markdownText) {
   const prepared = stripDocumentMeta(markdownText);
+  const structuredBlocks = extractStructuredSectionBlocks(prepared, () => ++chunkIndex);
   const lines = prepared.replace(/\r\n/g, "\n").split("\n");
   const stack = [];
   const blocks = [];
   let buffer = [];
   let inCodeFence = false;
+  let codeFenceLang = "";
+  let codeBuffer = [];
   let chunkIndex = 0;
 
   const flushBuffer = () => {
@@ -46,7 +57,7 @@ function buildChunks(markdownText) {
     const headingPath = stack.map((item) => item.title);
     const title = headingPath[headingPath.length - 1] || "未命名知识";
     if (shouldSkipBlock(headingPath, text)) return;
-    const contentParts = splitContent(text, 680);
+    const contentParts = splitContent(text, CHUNK_MAX_LEN);
 
     for (const content of contentParts) {
       const contextText = `${headingPath.join(" ")} ${content}`;
@@ -69,11 +80,28 @@ function buildChunks(markdownText) {
     const line = rawLine.trimEnd();
 
     if (line.startsWith("```")) {
-      inCodeFence = !inCodeFence;
-      flushBuffer();
+      if (!inCodeFence) {
+        flushBuffer();
+        inCodeFence = true;
+        codeFenceLang = line.slice(3).trim().toLowerCase();
+        codeBuffer = [];
+      } else {
+        if (shouldParseStructuredYaml(stack, codeFenceLang, codeBuffer)) {
+          const headingPath = stack.map((item) => item.title);
+          for (const block of buildStructuredBlocks(codeBuffer.join("\n"), headingPath, () => ++chunkIndex)) {
+            blocks.push(block);
+          }
+        }
+        inCodeFence = false;
+        codeFenceLang = "";
+        codeBuffer = [];
+      }
       continue;
     }
-    if (inCodeFence) continue;
+    if (inCodeFence) {
+      codeBuffer.push(line);
+      continue;
+    }
     if (line === "---") {
       flushBuffer();
       continue;
@@ -99,7 +127,7 @@ function buildChunks(markdownText) {
 
   flushBuffer();
 
-  return blocks.filter((item) => item.content.length >= 18);
+  return [...structuredBlocks, ...blocks].filter((item) => item.content.length >= 18);
 }
 
 function stripDocumentMeta(markdownText) {
@@ -167,22 +195,214 @@ function splitContent(text, maxLen) {
 
 function shouldSkipBlock(headingPath, text) {
   const pathText = headingPath.join(" > ");
-  const syntheticSections = [
-    "【0】使用原则",
-    "【1】结构化知识标准",
-    "【2】华胜业务环节地图",
-    "【3】内容与客服共用场景地图",
-    "【4】首批结构化知识包样例",
-    "【5】优先拆分清单",
-    "【6】后续拆分建议",
-  ];
-
-  if (syntheticSections.some((title) => pathText.includes(title))) return true;
-  if (pathText.includes("【7】原始资料层（保留）")) return true;
+  if (SYNTHETIC_SECTION_TITLES.some((title) => pathText.includes(title))) return true;
   if (/^title:\s|^date:\s|^author:\s|^tags:/i.test(text)) return true;
   if (text.includes("本周立即行动") || text.includes("四周MVP开发计划")) return true;
   if (text.length < 20) return true;
   return false;
+}
+
+function shouldParseStructuredYaml(headingPath, lang, lines) {
+  if (!lines.length || lang !== "yaml") return false;
+  const pathText = headingPath.join(" > ");
+  return pathText.includes("【4】首批结构化知识包样例");
+}
+
+function extractStructuredSectionBlocks(markdownText, nextIndex) {
+  const sectionMatch = markdownText.match(/##\s+【4】首批结构化知识包样例([\s\S]*?)(?=\n##\s+【5】优先拆分清单|\s*$)/);
+  if (!sectionMatch) return [];
+
+  const section = sectionMatch[1];
+  const blocks = [];
+  const regex = /###\s+([^\n]+)\n+```yaml\s*([\s\S]*?)```/g;
+  let match;
+
+  while ((match = regex.exec(section)) !== null) {
+    const title = cleanText(match[1]);
+    const yamlText = match[2];
+    const headingPath = ["【4】首批结构化知识包样例", title];
+    blocks.push(...buildStructuredBlocks(yamlText, headingPath, nextIndex));
+  }
+
+  return blocks;
+}
+
+function buildStructuredBlocks(yamlText, headingPath, nextIndex) {
+  const entries = parseYamlRecords(yamlText);
+  return entries
+    .map((entry) => {
+      const content = cleanText(entry.content || "");
+      if (!content) return null;
+
+      const triggerCondition = cleanText(entry.trigger_condition || "");
+      const usageRule = cleanText(entry.usage_rule || "");
+      const sourceModule = cleanText(entry.source_module || "");
+      const keywords = normalizeKeywordArray(entry.keywords);
+      const textForInference = [
+        entry.title || "",
+        content,
+        triggerCondition,
+        usageRule,
+        sourceModule,
+        keywords.join(" "),
+      ].join(" ");
+
+      const topics = normalizeStructuredTopics(entry.topic);
+      const businessStages = normalizeStructuredBusinessStages(entry.business_stage);
+      const scenes = normalizeStructuredScenes(entry.scene);
+      const knowledgeTypes = normalizeStructuredKnowledgeTypes(entry.knowledge_type);
+
+      return {
+        id: entry.id || `kb-${String(nextIndex()).padStart(4, "0")}`,
+        title: cleanText(entry.title || headingPath[headingPath.length - 1] || "未命名知识"),
+        headingPath,
+        content,
+        triggerCondition,
+        usageRule,
+        sourceModule,
+        confidence: cleanText(entry.confidence || ""),
+        topics: topics.length ? topics : inferTopics(textForInference),
+        businessStages: businessStages.length ? businessStages : inferBusinessStages(textForInference),
+        scenes: scenes.length ? scenes : inferScenes(textForInference),
+        knowledgeTypes: knowledgeTypes.length ? knowledgeTypes : inferKnowledgeTypes(textForInference),
+        publicLevel: normalizePublicLevel(entry.public_level) || inferPublicLevel(textForInference),
+        keywords: keywords.length ? keywords : extractKeywords(textForInference),
+      };
+    })
+    .filter(Boolean);
+}
+
+function parseYamlRecords(yamlText) {
+  const lines = yamlText.split("\n");
+  const records = [];
+  let current = null;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    if (!line.trim()) continue;
+
+    if (line.startsWith("- ")) {
+      if (current) records.push(current);
+      current = {};
+      const pair = line.slice(2);
+      assignYamlPair(current, pair);
+      continue;
+    }
+
+    if (current && /^\s{2,}\S/.test(rawLine)) {
+      assignYamlPair(current, line.trim());
+    }
+  }
+
+  if (current) records.push(current);
+  return records;
+}
+
+function assignYamlPair(target, pairLine) {
+  const separator = pairLine.indexOf(":");
+  if (separator === -1) return;
+
+  const key = pairLine.slice(0, separator).trim();
+  const rawValue = pairLine.slice(separator + 1).trim();
+  target[key] = parseYamlValue(rawValue);
+}
+
+function parseYamlValue(value) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    return trimmed
+      .slice(1, -1)
+      .split(/[,，]/)
+      .map((item) => cleanText(item))
+      .filter(Boolean);
+  }
+  return cleanText(trimmed.replace(/^["']|["']$/g, ""));
+}
+
+function normalizeKeywordArray(value) {
+  if (Array.isArray(value)) return value.map((item) => cleanText(String(item))).filter(Boolean);
+  if (typeof value === "string" && value) return value.split(/[,，]/).map((item) => cleanText(item)).filter(Boolean);
+  return [];
+}
+
+function normalizeStructuredTopics(value) {
+  const items = Array.isArray(value) ? value : [value];
+  const mapping = {
+    "中试服务": "pilot",
+    "制药设备": "equipment",
+    "溶剂胶设备": "equipment",
+    "热熔胶设备": "equipment",
+    "凝胶贴膏设备": "equipment",
+    "炼合设备": "equipment",
+    "前处理设备": "equipment",
+    "分切包装设备": "equipment",
+    "橡胶膏设备": "equipment",
+    "包材产品": "material",
+    "院内制剂": "hospital",
+    "企业实力": "strength",
+    "一站式服务": "onestop",
+    "一站式采购": "onestop",
+    "人才培训": "training",
+    "经皮知识": "tdts",
+  };
+  return [...new Set(items.map((item) => mapping[cleanText(String(item))]).filter(Boolean))];
+}
+
+function normalizeStructuredBusinessStages(value) {
+  const items = Array.isArray(value) ? value : [value];
+  const mapping = {
+    "品牌认知": "brand",
+    "客户咨询": "consultation",
+    "中试服务": "pilot_service",
+    "设备选型": "equipment_selection",
+    "工艺放大": "pilot_service",
+    "合规备案": "compliance",
+    "量产交付": "delivery",
+    "售后服务": "aftersales",
+    "内容传播": "content",
+  };
+  return [...new Set(items.map((item) => mapping[cleanText(String(item))]).filter(Boolean))];
+}
+
+function normalizeStructuredScenes(value) {
+  const items = Array.isArray(value) ? value : [value];
+  const mapping = {
+    "设备运行视频": "equipment_video",
+    "技术讲解视频": "technical_talk",
+    "技术讲解": "technical_talk",
+    "车间/基地展示": "base_showcase",
+    "基地展示": "base_showcase",
+    "客户来访/接待": "client_visit",
+    "院内制剂咨询": "hospital_consultation",
+    "售前问答": "sales_qa",
+    "售后问答": "aftersales_qa",
+    "行业认知内容": "industry_content",
+    "内容生成": "industry_content",
+    "品牌介绍": "industry_content",
+    "基地展示": "base_showcase",
+    "设备运行视频": "equipment_video",
+  };
+  return [...new Set(items.map((item) => mapping[cleanText(String(item))]).filter(Boolean))];
+}
+
+function normalizeStructuredKnowledgeTypes(value) {
+  const items = Array.isArray(value) ? value : [value];
+  const mapping = {
+    fact: "fact",
+    pain_point: "pain_point",
+    solution: "solution",
+    evidence: "evidence",
+    expression_rule: "expression_rule",
+    compliance_rule: "compliance_rule",
+  };
+  return [...new Set(items.map((item) => mapping[cleanText(String(item))]).filter(Boolean))];
+}
+
+function normalizePublicLevel(value) {
+  const normalized = cleanText(String(value || "")).toLowerCase();
+  if (["public", "restricted", "internal"].includes(normalized)) return normalized;
+  return "";
 }
 
 function inferTopics(text) {
