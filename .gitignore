@@ -1,0 +1,11 @@
+.DS_Store
+.wrangler/
+.venv/
+.rag-cache/
+__pycache__/
+node_modules/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.*

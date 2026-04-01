@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>华胜中试 · 内容生产工作台</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* 沉浸式纸感杂志风 - 纸墨质感调色板 */
+    --bg-paper:   #f2f0ea;        /* 纸张米色：比纯白更护眼，更有书卷气 */
+    --bg-card:    #ffffff;        /* 卡片白：用于区分层级 */
+    --bg-warm:    #faf9f6;        /* 暖白背景 */
+
+    --text-ink:   #2c2c2c;        /* 油墨黑：比纯黑更柔和 */
+    --text-soft:  #4a4a4a;        /* 柔和文字 */
+    --text-meta:  #666666;        /* 辅助灰：用于元数据 */
+    --text-muted: #8a8a8a;        /* 弱化文字 */
+
+    --line-paper: #e5e2da;        /* 纸张分割线 */
+    --line-warm:  #d9d5cc;        /* 暖色分割线 */
+
+    --accent-gold:    #b45309;    /* 焦糖色：重点强调 */
+    --accent-deep:    #1e3a3a;    /* 深青绿：静谧强调色 */
+    --accent-warm:    #92400e;    /* 暖棕强调 */
+
+    --marker-yellow:  rgba(255, 230, 0, 0.35);  /* 荧光笔黄 */
+    --marker-orange:  rgba(251, 191, 36, 0.25); /* 暖色高亮 */
+
+    --error:      #c45c4a;
+
+    /* 字体系统 - 衬线体为主 */
+    --font-serif: "Noto Serif SC", "Songti SC", "SimSun", "STSong", serif;
+    --font-sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", sans-serif;
+
+    /* 间距系统 - 更宽松的呼吸感 */
+    --space-1:    0.25rem;   /* 4px */
+    --space-2:    0.5rem;    /* 8px */
+    --space-3:    0.75rem;   /* 12px */
+    --space-4:    1rem;      /* 16px */
+    --space-5:    1.25rem;   /* 20px */
+    --space-6:    1.5rem;    /* 24px */
+    --space-8:    2rem;      /* 32px */
+    --space-10:   2.5rem;    /* 40px */
+    --space-12:   3rem;      /* 48px */
+    --space-16:   4rem;      /* 64px */
+
+    /* 过渡 */
+    --transition: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* 页面加载动画 */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .card { animation: fadeInUp 0.6s ease-out; }
+  .section { animation: slideIn 0.4s ease-out backwards; }
+  .section:nth-child(1) { animation-delay: 0.1s; }
+  .section:nth-child(2) { animation-delay: 0.2s; }
+  .section:nth-child(3) { animation-delay: 0.3s; }
+  .section:nth-child(4) { animation-delay: 0.4s; }
+
+  /* 专业图标系统 */
+  .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+  }
+  .icon-sm { width: 0.875rem; height: 0.875rem; }
+  .icon-md { width: 1rem; height: 1rem; }
+  .icon-lg { width: 1.25rem; height: 1.25rem; }
+
+  /* Chip 图标 */
+  .chip-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    opacity: 0.7;
+    transition: opacity var(--transition);
+  }
+  .chip:hover .chip-icon,
+  .chip.selected .chip-icon {
+    opacity: 1;
+  }
+
+  body {
+    font-family: var(--font-serif);
+    background: var(--bg-paper);
+    color: var(--text-ink);
+    min-height: 100vh;
+    line-height: 1.8;
+    padding-bottom: var(--space-16);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--bg-card);
+    padding: var(--space-6) var(--space-8);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 1px solid var(--line-paper);
+  }
+  .header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .header-bar {
+    width: 3px;
+    height: 36px;
+    background: var(--accent-gold);
+    flex-shrink: 0;
+  }
+  .header-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-ink);
+    line-height: 1.4;
+    letter-spacing: 0.05em;
+  }
+  .header-sub {
+    font-size: 0.8125rem;
+    color: var(--text-meta);
+    margin-top: var(--space-1);
+    font-family: var(--font-sans);
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Password Gate ── */
+  .password-gate {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg-paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .password-box {
+    background: var(--bg-card);
+    padding: var(--space-12) var(--space-10);
+    width: 90%;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+  }
+  .password-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-ink);
+    margin-bottom: var(--space-2);
+    letter-spacing: 0.05em;
+  }
+  .password-hint {
+    font-size: 0.9375rem;
+    color: var(--text-meta);
+    margin-bottom: var(--space-10);
+    font-family: var(--font-sans);
+  }
+  .password-input {
+    width: 100%;
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--line-paper);
+    border-radius: 4px;
+    font-size: 1.125rem;
+    text-align: center;
+    letter-spacing: 0.3em;
+    margin-bottom: var(--space-5);
+    background: var(--bg-warm);
+    transition: all var(--transition);
+    font-family: var(--font-sans);
+  }
+  .password-input:focus {
+    outline: none;
+    border-color: var(--accent-gold);
+    background: var(--bg-card);
+  }
+  .password-input::placeholder {
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+  }
+  .password-btn {
+    width: 100%;
+    padding: var(--space-4) var(--space-5);
+    background: var(--accent-gold);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    font-family: var(--font-sans);
+  }
+  .password-btn:hover { background: var(--accent-warm); }
+  .password-error {
+    color: var(--error);
+    font-size: 0.875rem;
+    margin-top: var(--space-4);
+    display: none;
+    font-family: var(--font-sans);
+  }
+
+  /* ── Main Layout ── */
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--space-10) var(--space-8) var(--space-16);
+  }
+
+  /* ── Config Panel ── */
+  .config-panel {
+    background: var(--bg-card);
+    padding: var(--space-10) var(--space-8);
+    border-radius: 4px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.03);
+    margin-bottom: var(--space-8);
+  }
+
+  /* ── Output Panel ── */
+  .output-panel {
+    min-height: 100px;
+  }
+
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: var(--space-6);
+    position: relative;
+    z-index: 1;
+  }
+  .section:last-of-type {
+    margin-bottom: var(--space-6);
+  }
+
+  .section-label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-ink);
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-family: var(--font-serif);
+  }
+  /* 步骤圆圈 */
+  .section-label::before {
+    content: attr(data-step);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-warm);
+    border: 1px solid var(--line-paper);
+    border-radius: 50%;
+    color: var(--text-meta);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    flex-shrink: 0;
+    transition: all var(--transition);
+  }
+  /* 激活状态的步骤圆圈 */
+  .section.active .section-label::before {
+    background: var(--accent-gold);
+    border-color: var(--accent-gold);
+    color: white;
+    box-shadow: 0 2px 8px rgba(180, 83, 9, 0.2);
+  }
+  /* 已完成状态的步骤圆圈 */
+  .section.completed .section-label::before {
+    background: var(--accent-gold);
+    border-color: var(--accent-gold);
+    color: white;
+  }
+  /* 步骤标题激活状态 */
+  .section.active .section-label {
+    color: var(--accent-gold);
+  }
+
+  /* ── Section Colors ── */
+  /* 内容主题 - 焦糖金 */
+  .section[data-section="topic"] .chip:hover {
+    border-color: #d9c9a8;
+    color: #5a4a3a;
+    box-shadow: 0 4px 12px rgba(196, 167, 125, 0.12);
+  }
+  .section[data-section="topic"] .chip.selected {
+    border-color: #c4a77d;
+    color: #6b5a4a;
+    background: linear-gradient(to bottom, transparent 60%, rgba(196, 167, 125, 0.12) 0);
+  }
+  .section[data-section="topic"].active .section-label::before,
+  .section[data-section="topic"].completed .section-label::before {
+    background: #c4a77d;
+    border-color: #c4a77d;
+    color: white;
+  }
+  .section[data-section="topic"].active .section-label {
+    color: #8b7355;
+  }
+  .section[data-section="topic"] .chips {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .section[data-section="topic"] .chip {
+    min-height: 42px;
+    padding: 8px 10px;
+    justify-content: center;
+    gap: 0;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+  }
+  .section[data-section="topic"] .chip > div {
+    width: 100%;
+  }
+  .section[data-section="topic"] .chip-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+  }
+
+  /* 素材描述 - 暖玫瑰 */
+  .section[data-section="brief"].active .section-label::before,
+  .section[data-section="brief"].completed .section-label::before {
+    background: #c9a6a6;
+    border-color: #c9a6a6;
+    color: white;
+  }
+  .section[data-section="brief"].active .section-label {
+    color: #8b6b6b;
+  }
+
+  /* 发布平台 - 暖青绿 */
+  .section[data-section="platform"] .chip:hover {
+    border-color: #c4d4c4;
+    color: #4a5a4a;
+    box-shadow: 0 4px 12px rgba(159, 180, 160, 0.12);
+  }
+  .section[data-section="platform"] .chip.selected {
+    border-color: #9fb4a0;
+    color: #5a6b5a;
+    background: linear-gradient(to bottom, transparent 60%, rgba(159, 180, 160, 0.12) 0);
+  }
+  .section[data-section="platform"].active .section-label::before,
+  .section[data-section="platform"].completed .section-label::before {
+    background: #9fb4a0;
+    border-color: #9fb4a0;
+    color: white;
+  }
+  .section[data-section="platform"].active .section-label {
+    color: #5a7a5b;
+  }
+
+  /* 内容类型 - 暖紫褐 */
+  .section[data-section="type"] .chip:hover {
+    border-color: #d4c4d4;
+    color: #5a4a5a;
+    box-shadow: 0 4px 12px rgba(184, 168, 184, 0.12);
+  }
+  .section[data-section="type"] .chip.selected {
+    border-color: #b8a8b8;
+    color: #6b5a6b;
+    background: linear-gradient(to bottom, transparent 60%, rgba(184, 168, 184, 0.12) 0);
+  }
+  .section[data-section="type"].active .section-label::before,
+  .section[data-section="type"].completed .section-label::before {
+    background: #b8a8b8;
+    border-color: #b8a8b8;
+    color: white;
+  }
+  .section[data-section="type"].active .section-label {
+    color: #7a6a7a;
+  }
+
+  /* ── Chips ── */
+  .chips {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+    position: relative;
+  }
+
+  .brief-input {
+    width: 100%;
+    min-height: 132px;
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--line-paper);
+    border-radius: 4px;
+    background: var(--bg-warm);
+    color: var(--text-ink);
+    font-size: 0.9375rem;
+    line-height: 1.8;
+    resize: vertical;
+    transition: all var(--transition);
+    font-family: var(--font-sans);
+  }
+  .brief-input:focus {
+    outline: none;
+    border-color: #c9a6a6;
+    background: var(--bg-card);
+    box-shadow: 0 0 0 3px rgba(201, 166, 166, 0.12);
+  }
+  .brief-input::placeholder {
+    color: var(--text-muted);
+  }
+  .brief-hint {
+    margin-top: var(--space-3);
+    color: var(--text-meta);
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    font-family: var(--font-sans);
+  }
+
+  .chip {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--line-paper);
+    border-radius: 4px;
+    background: var(--bg-warm);
+    color: var(--text-soft);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+    font-family: var(--font-serif);
+    text-align: left;
+    line-height: 1.5;
+    width: 100%;
+    min-height: 72px;
+  }
+  .chip:hover {
+    border-color: var(--line-warm);
+    background: var(--bg-card);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+  .chip.selected {
+    font-weight: 600;
+  }
+  .chip-note {
+    font-size: 0.75rem;
+    color: var(--text-meta);
+    font-weight: 400;
+    font-family: var(--font-sans);
+  }
+  .chip.selected .chip-note { color: var(--accent-warm); }
+
+  /* ── Platform Info Icon ── */
+  .platform-info-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 100;
+  }
+  .platform-info-wrapper:hover {
+    z-index: 1000;
+  }
+  .chip {
+    position: relative;
+    padding-right: 32px;
+    overflow: visible;
+  }
+  .chip:hover {
+    z-index: 200;
+  }
+  .platform-info-icon {
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--line-warm);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    color: var(--text-meta);
+    cursor: pointer;
+    transition: all var(--transition);
+    background: var(--bg-card);
+  }
+  .platform-info-icon:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+    background: var(--bg-card);
+  }
+
+  /* ── Platform Detail Tooltip ── */
+  .platform-detail {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    background: #ffffff;
+    padding: var(--space-5);
+    font-size: 0.8125rem;
+    color: var(--text-soft);
+    line-height: 1.7;
+    border: 1px solid var(--line-paper);
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    width: 280px;
+    z-index: 9999;
+    display: none;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+  .platform-detail::before {
+    content: '';
+    position: absolute;
+    right: 6px;
+    top: -6px;
+    border-width: 0 6px 6px 6px;
+    border-style: solid;
+    border-color: transparent transparent var(--line-paper) transparent;
+  }
+  .platform-detail::after {
+    content: '';
+    position: absolute;
+    right: 7px;
+    top: -5px;
+    border-width: 0 5px 5px 5px;
+    border-style: solid;
+    border-color: transparent transparent #ffffff transparent;
+  }
+  .platform-info-wrapper:hover .platform-detail {
+    display: block;
+  }
+  .platform-detail-title {
+    font-weight: 600;
+    color: var(--accent-gold);
+    margin-bottom: var(--space-3);
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+  }
+  .platform-detail-item {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .platform-detail-item:last-child { margin-bottom: 0; }
+  .platform-detail-label {
+    color: var(--text-meta);
+    flex-shrink: 0;
+    width: 48px;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+  }
+  .platform-detail-value {
+    color: var(--text-ink);
+    font-family: var(--font-serif);
+    flex: 1;
+    word-break: break-word;
+    flex: 1;
+  }
+
+  /* ── Content Type Section -- */
+  #contentTypeSection {
+    transition: opacity var(--transition-slow);
+  }
+
+  /* ── Content Type Hint ── */
+  .content-type-hint {
+    font-size: 0.875rem;
+    color: var(--text-meta);
+    margin-top: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    background: var(--bg-paper);
+    border-left: 3px solid var(--line-warm);
+    border-radius: 0 4px 4px 0;
+    font-family: var(--font-sans);
+    font-style: italic;
+  }
+
+  /* ── Generate button ── */
+  .gen-btn {
+    width: 100%;
+    padding: var(--space-5) var(--space-8);
+    border: none;
+    border-radius: 4px;
+    background: var(--accent-gold);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all var(--transition);
+    font-family: var(--font-serif);
+    margin-top: var(--space-4);
+    position: relative;
+    overflow: hidden;
+  }
+  .gen-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.6s;
+  }
+  .gen-btn:hover::before {
+    left: 100%;
+  }
+  .gen-btn:disabled {
+    background: var(--line-paper);
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+  .gen-btn:not(:disabled):hover {
+    background: var(--accent-warm);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(180, 83, 9, 0.2);
+  }
+  .gen-btn:not(:disabled):active {
+    transform: translateY(0);
+  }
+
+  .gen-hint {
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--text-meta);
+    margin-top: var(--space-4);
+    font-family: var(--font-sans);
+    font-style: italic;
+  }
+
+  /* ── Loading ── */
+  .loading {
+    text-align: center;
+    padding: var(--space-12);
+    color: var(--text-meta);
+    font-size: 0.9375rem;
+    font-family: var(--font-sans);
+  }
+  .spinner {
+    display: inline-block;
+    width: 24px; height: 24px;
+    border: 2px solid var(--line-paper);
+    border-top-color: var(--accent-gold);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin-right: var(--space-3);
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Error ── */
+  .error-box {
+    background: #fdf8f6;
+    border-left: 3px solid var(--error);
+    padding: var(--space-5) var(--space-6);
+    color: var(--error);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-8);
+    font-family: var(--font-sans);
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* ── Result divider ── */
+  .result-divider {
+    position: relative;
+    text-align: center;
+    margin: var(--space-8) 0 var(--space-6);
+  }
+  .result-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--line-paper) 20%, var(--line-paper) 80%, transparent);
+    z-index: 0;
+  }
+  .result-divider-text {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+    padding: 0 var(--space-4);
+    font-size: 0.8125rem;
+    color: var(--text-meta);
+    font-family: var(--font-sans);
+    letter-spacing: 0.05em;
+    background: var(--bg-paper);
+  }
+
+  /* ── Result blocks ── */
+  #outputArea {
+    animation: fadeInUp 0.5s ease-out;
+  }
+
+  .result-block {
+    background: var(--bg-card);
+    border: 1px solid var(--line-paper);
+    overflow: hidden;
+    margin-bottom: var(--space-5);
+    transition: all var(--transition);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  }
+  .result-block:hover {
+    border-color: var(--line-warm);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+  }
+  .result-block-header {
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .result-block-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: rgba(0,0,0,0.6);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .copy-btn {
+    font-size: 0.6875rem;
+    color: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.06);
+    border: none;
+    padding: var(--space-1) var(--space-3);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all var(--transition);
+    border-radius: 3px;
+  }
+  .copy-btn:hover {
+    background: rgba(0,0,0,0.12);
+    color: rgba(0,0,0,0.7);
+  }
+  .result-block-body {
+    padding: var(--space-5) var(--space-6);
+    font-size: 0.875rem;
+    color: var(--text-ink);
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: var(--font-serif);
+  }
+
+  .retry-hint {
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--text-meta);
+    padding: var(--space-4) 0 var(--space-8);
+    cursor: pointer;
+    transition: color var(--transition);
+  }
+  .retry-hint:hover {
+    color: var(--accent-gold);
+  }
+
+  /* ── Footer note ── */
+  .footer-note {
+    font-size: 0.75rem;
+    color: var(--text-meta);
+    text-align: center;
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+    font-family: var(--font-sans);
+  }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 768px) {
+    .main {
+      padding: var(--space-8) var(--space-4) var(--space-12);
+    }
+    .config-panel {
+      padding: var(--space-6) var(--space-5);
+    }
+    .chips {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .section[data-section="topic"] .chips {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* ── Feishu Save Button ── */
+  .feishu-save-box {
+    background: var(--bg-warm);
+    border: 1px dashed var(--line-warm);
+    padding: var(--space-5) var(--space-6);
+    margin-bottom: var(--space-5);
+    text-align: center;
+    border-radius: 4px;
+  }
+  .feishu-save-btn {
+    background: var(--accent-gold);
+    color: white;
+    border: none;
+    padding: var(--space-3) var(--space-6);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    font-family: var(--font-sans);
+    border-radius: 4px;
+  }
+  .feishu-save-btn:hover:not(:disabled) { background: var(--accent-warm); }
+  .feishu-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .feishu-hint {
+    font-size: 0.8125rem;
+    color: var(--text-meta);
+    margin-top: var(--space-3);
+    font-family: var(--font-sans);
+  }
+  .feishu-result { margin-bottom: var(--space-5); }
+  .feishu-success {
+    background: linear-gradient(135deg, #f0f5f0 0%, #f7f5f0 100%);
+    border: 1px solid #c5d5c5;
+    border-radius: 6px;
+    padding: var(--space-4) var(--space-5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .feishu-success-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .feishu-success-icon {
+    width: 24px;
+    height: 24px;
+    background: #4a7c59;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .feishu-success-icon svg {
+    width: 14px;
+    height: 14px;
+    stroke: white;
+    stroke-width: 3;
+  }
+  .feishu-success-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #2d5a3d;
+    font-family: var(--font-serif);
+    letter-spacing: 0.02em;
+  }
+  .feishu-link {
+    color: var(--accent-gold);
+    text-decoration: none;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-card);
+    border: 1px solid var(--accent-gold);
+    border-radius: 4px;
+    transition: all var(--transition);
+    font-family: var(--font-sans);
+  }
+  .feishu-link:hover {
+    background: var(--accent-gold);
+    color: white;
+  }
+</style>
+</head>
+<body>
+
+<!-- Password Gate -->
+<div class="password-gate" id="passwordGate">
+  <div class="password-box">
+    <div class="password-title">华胜内容生产工作台</div>
+    <div class="password-hint">请输入访问密码</div>
+    <input type="password" class="password-input" id="passwordInput" placeholder="••••••">
+    <button class="password-btn" onclick="checkPassword()">进入工作台</button>
+    <div class="password-error" id="passwordError">密码错误，请重试</div>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-bar"></div>
+    <div>
+      <div class="header-title">华胜中试 · 内容生产工作台</div>
+      <div class="header-sub">创百年华胜 造世界精品 · 30余年外用制剂全链路服务</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <!-- Left: Config Panel -->
+  <div class="config-panel">
+    <!-- 主题 -->
+    <div class="section" data-section="topic">
+      <div class="section-label" data-step="1">内容主题</div>
+      <div class="chips" id="topicChips"></div>
+    </div>
+
+    <!-- 素材描述 -->
+    <div class="section" data-section="brief">
+      <div class="section-label" data-step="2">视频素材 / 表达重点</div>
+      <textarea
+        id="briefInput"
+        class="brief-input"
+        placeholder="例如：视频是凝胶贴膏设备运行实拍，重点想表达自动化程度高、换型效率高、适合中试放大，不要总是强调省钱。"
+      ></textarea>
+      <div class="brief-hint">写清视频里拍了什么、你想突出什么、不要突出什么。这个描述会直接进入最终提示词。</div>
+    </div>
+
+    <!-- 平台 -->
+    <div class="section" data-section="platform">
+      <div class="section-label" data-step="3">发布平台</div>
+      <div class="chips" id="platformChips"></div>
+    </div>
+
+    <!-- 内容类型 -->
+    <div class="section" id="contentTypeSection" data-section="type" style="opacity: 0.5;">
+      <div class="section-label" data-step="4">内容类型（可多选）</div>
+      <div class="chips" id="typeChips"></div>
+      <div id="contentTypeHint" class="content-type-hint">请先选择发布平台，内容类型将根据平台特性自动适配</div>
+    </div>
+
+    <!-- Button -->
+    <button class="gen-btn" id="genBtn" onclick="generate()" disabled>
+      一键生成内容物料
+    </button>
+    <div class="gen-hint" id="genHint">请完成主题 / 素材描述 / 平台选择，并至少选一种内容类型</div>
+
+  </div>
+
+  <!-- Output Panel -->
+  <div class="output-panel" id="outputArea"></div>
+
+  <div class="footer-note" style="margin-top: var(--space-8);">
+    内容由 AI 生成，建议人工微调后发布 · 版本 v2.1
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// 华胜内容生成工具 - 配置中心
+// ═══════════════════════════════════════════════════════════════════
+
+const CONFIG = {
+  // API配置
+  API_URL: "https://huasheng-content.haniaalrougui.workers.dev/",
+  ACCESS_PASSWORD: "huasheng2026",
+
+  // ═════════════════════════════════════════════════════════════════
+  // 【公司背景知识库】- 基于华胜知识库v1.0
+  // ═════════════════════════════════════════════════════════════════
+  COMPANY: {
+    slogan: "创百年华胜 造世界精品",
+    founded: "1993年",
+    history: "30余年",
+    positioning: "聚焦外用制剂领域，从小试到中试到规模量产，提供全链路交钥匙服务",
+    pilotBase: {
+      main: "12000平米开放式共享贴剂中试基地",
+      sub: "3000余平方米中药外用药中试转化平台",
+      cleanroom: "具备C级、D级洁净区条件",
+      equipment: "18套中试设备+10余种检验设备",
+      team: "技术人员10余人"
+    },
+    partnership: "与国内顶尖中药研究机构共建",
+    advisor: "侯惠民院士等行业专家顾问",
+    equipment: {
+      cipCleaning: "在线清洗站，清洗时间1小时（vs人工8小时），费用30元/次（vs人工800元）",
+      dailySavings: "每天至少节省21,170元",
+      flyingPlate: "飞式板压凝胶涂布机，110-650片/分钟",
+      sLine: "S线智能电眼追踪切片机，六列成品率94.12%"
+    }
+  },
+
+  // ═════════════════════════════════════════════════════════════════
+  // 【主题配置】
+  // ═════════════════════════════════════════════════════════════════
+  TOPICS: [
+    {
+      id: "pilot",
+      label: "中试服务",
+      desc: "12000平开放式共享基地·从小试到量产全链路",
+      hooks: {
+        pharma_all: ["90%的新药项目不是死在临床，是死在中试", "为什么中试失败的锅，总是研发部背？"],
+        tdds_pro: ["凝胶膏剂中试放大，黏度每升高10%，失败率增加35%", "同样的处方，实验室95分，中试直接不及格"],
+        executive: ["你熬了3个月的处方，放大到100公斤直接分层", "中试失败的锅，为什么总是研发部背？"],
+        management: ["自建中试车间1个亿投资，外包只要1/10", "项目延期6个月，隐性成本可能比中试费用还高"],
+        procurement: ["最低价中标的中试供应商，最后反而多花30%", "选择中试供应商的5个隐形风险点"],
+        compliance: ["中试批记录这3个问题，是现场核查的高频雷区", "从实验室到中试，数据链断裂的常见陷阱"],
+        executive_top: ["透皮给药赛道正在复制PD-1的故事，窗口期还剩多久？", "谁掌握了中试能力，谁就卡住了外用制剂的咽喉"]
+      }
+    },
+    {
+      id: "equipment",
+      label: "制药设备",
+      desc: "贴剂/凝胶膏剂生产线·服务工艺放大与稳定量产",
+      hooks: {
+        pharma_all: ["买设备便宜30万，运维贵100万，这笔账怎么算？", "为什么头部药企开始把进口设备换成国产？"],
+        tdds_pro: ["凝胶膏剂设备选错，换型成本够买半条生产线", "同样的产能，为什么大厂只要一半的设备？"],
+        executive: ["选型时只看价格，结果产能利用率只有40%", "贴剂生产线这3个参数，决定了你的换型时间"],
+        management: ["一条贴剂生产线300万，产能利用率只有40%，你算过账吗？", "买设备便宜30万，运维贵100万，这笔账怎么算？"],
+        procurement: ["设备供应商评估的5个隐形维度，价格表上看不到", "进口VS国产：什么时候选进口，什么时候选国产？"],
+        compliance: ["设备DQ/IQ/OQ验证不过，项目延期3个月", "设备变更没备案，现场核查被开缺陷"],
+        executive_top: ["设备国产化浪潮下，谁掌握了核心工艺？", "从设备供应商到整体解决方案，行业格局正在重塑"]
+      }
+    },
+    {
+      id: "material",
+      label: "包材产品",
+      desc: "压花膜/TPU弹力布/外包装袋·全系列配套",
+      hooks: {
+        pharma_all: ["包材选错，贴剂还没出厂就翘边", "为什么大厂都有自己的包材标准？"],
+        tdds_pro: ["换了3家包材供应商，终于找到了不翘边的秘诀", "包材和中试工艺不匹配，量产时问题爆发"],
+        executive: ["换了3家包材供应商，终于找到了不翘边的秘诀", "包材和中试工艺不匹配，量产时问题爆发"],
+        management: ["包材成本占贴剂总成本的多少？你可能算少了", "包材供应商评估，除了价格还要看什么？"],
+        procurement: ["包材采购的隐性成本，比单价高3倍", "如何评估包材供应商的真实产能？"]
+      }
+    },
+    {
+      id: "hospital",
+      label: "院内制剂",
+      desc: "医院药剂科备案·GMP合规·全程技术服务",
+      hooks: {
+        pharma_all: ["院内制剂备案，为什么80%的卡在这一步？", "医院自己做贴剂，比买成品省多少钱？"],
+        executive: ["院内制剂中试，和商业化生产有什么不同？", "备案资料准备，最容易被忽略的3个细节"],
+        management: ["院内制剂项目的ROI怎么算？", "医院备案流程，平均需要多少天？"],
+        procurement: ["院内制剂服务供应商怎么选？", "价格最低的供应商，合规风险最高？"],
+        compliance: ["院内制剂GMP要求，比想象更严格", "现场核查时，这5个问题必问"]
+      }
+    },
+    {
+      id: "strength",
+      label: "企业实力",
+      desc: "30余年深耕·整体解决方案·产业协同能力",
+      hooks: {
+        pharma_all: ["30余年持续深耕外用制剂领域，这家企业到底强在哪？", "为什么越来越多项目更看重整体解决方案能力，而不只看单台设备？"],
+        executive: ["华胜设备用了5年，和进口设备对比如何？", "从雄县机械厂到行业龙头，30年只做一件事"],
+        management: ["选择设备供应商，看历史还是看规模？", "30年设备厂家，比新厂贵但值"],
+        procurement: ["供应商评估，历史业绩占多少权重？", "为什么大客户都选择华胜？"],
+        compliance: ["华胜设备的验证包，审计一次过的秘诀", "30年品质沉淀，合规体系如何建立？"],
+        executive_top: ["从雄县机械厂到行业龙头，30余年只做一件事", "出口20多个国家，中国设备的国际认可度"]
+      }
+    },
+    {
+      id: "onestop",
+      label: "一站式采购",
+      desc: "设备+耗材+辅料+包材+中试·交钥匙工程",
+      hooks: {
+        pharma_all: ["找10家供应商，不如找1家做全链路的", "一站式采购，能省多少管理成本？"],
+        executive: ["分项采购vs一站式，哪个更适合你的项目？", "一站式服务的隐性价值，怎么算？"],
+        management: ["交钥匙工程vs分项采购，哪个更适合你？", "全链路服务，出了问题找谁？"],
+        procurement: ["供应商数量从10家减到1家，采购成本不降反升？", "一站式服务的隐性价值，怎么算？"]
+      }
+    },
+    {
+      id: "training",
+      label: "人才培训",
+      desc: "研究生实践基地·设备操作·工艺培训",
+      hooks: {
+        pharma_all: ["设备买回去不会用？培训比设备更重要", "研究生实践基地，产学研怎么结合？"],
+        tdds_pro: ["设备操作培训，为什么一定要有实操环节？", "从实验室到量产，需要哪些技能培训？"],
+        management: ["员工培训投入，多久能看到回报？", "校企合作，能解人才短缺之困吗？"]
+      }
+    },
+    {
+      id: "tdts",
+      label: "经皮知识",
+      desc: "透皮给药技术/行业趋势/专业解读",
+      hooks: {
+        pharma_all: ["2025年透皮给药迎来爆发，但90%的人没看懂政策信号", "贴剂 VS 凝胶膏剂，哪个才是未来？"],
+        tdds_pro: ["为什么你的贴剂贴到患者身上就翘边？", "凝胶膏剂黏度越高，反而越容易失败"],
+        executive: ["透皮给药中试，最容易踩的3个坑", "从实验室到临床，透皮贴剂要过几道关？"],
+        management: ["透皮给药市场，现在是入场的好时机吗？", "中试外包vs自建，透皮项目怎么选？"]
+      }
+    }
+  ],
+
+  // ═════════════════════════════════════════════════════════════════
+  // 【受众配置】
+  // ═════════════════════════════════════════════════════════════════
+  AUDIENCES: [
+    { id: "pharma_all", label: "医药行业从业者", note: "全职位覆盖 · 流量入口", layer: "泛内容" },
+    { id: "tdds_pro", label: "外用制剂研发人员", note: "透皮/凝胶膏剂/贴剂 · 精准受众", layer: "垂直层" },
+    { id: "executive", label: "研发执行层", note: "项目经理/研发经理 · 需求发起", layer: "执行层" },
+    { id: "management", label: "生产管理层", note: "CMO/生产总监 · 外包决策", layer: "管理层" },
+    { id: "procurement", label: "采购供应链", note: "采购总监/供应链经理 · 供应商选择", layer: "采购层" },
+    { id: "compliance", label: "质量合规层", note: "QA总监/注册经理 · 合规把关", layer: "合规层" },
+    { id: "executive_top", label: "高层决策者", note: "总经理/创始人/投资人 · 战略投资", layer: "决策层" }
+  ],
+
+  // ═════════════════════════════════════════════════════════════════
+  // 【平台配置】- 包含各平台专属的内容类型
+  // ═════════════════════════════════════════════════════════════════
+  PLATFORMS: {
+    douyin: {
+      id: "douyin",
+      label: "抖音",
+      note: "短视频平台 · 极快节奏 · 3秒定生死",
+      rhythm: "极快节奏",
+      hookInterval: "每5秒",
+      sentenceLength: "每句不超过12字",
+      emotion: "极高",
+      style: "口语化短句、情绪强烈、网络热词",
+      structure: "3秒致命钩子 → 15秒痛点放大 → 10秒解决方案 → 5秒强引导",
+      visual: "大字报字幕、音效提示、快节奏切换",
+      tactics: "利用完播率算法，前3秒必须制造认知冲突",
+      // 抖音只支持：口播脚本、标题+封面
+      contentTypes: [
+        { id: "oral", label: "口播脚本", desc: "150-200字，短句如机关枪" },
+        { id: "title", label: "标题+封面文案", desc: "3个备选，冲突感强" }
+      ],
+      wordCount: { oral: "150-200字", title: "15-25字" }
+    },
+    shipinhao: {
+      id: "shipinhao",
+      label: "视频号",
+      note: "微信生态 · B端深度 · 专业+人情味",
+      rhythm: "中等节奏",
+      hookInterval: "每15秒",
+      sentenceLength: "长短句结合",
+      emotion: "中等",
+      style: "专业但不刻板，有温度，用'我们'拉近距离",
+      structure: "10秒问题引入 → 30秒深度分析 → 15秒案例佐证 → 5秒信任引导",
+      visual: "数据可视化、案例图片、专家背书",
+      tactics: "利用社交关系链，强调'同行都在看'",
+      // 视频号支持全链路（微信生态）
+      contentTypes: [
+        { id: "oral", label: "口播脚本", desc: "200-300字，专业有温度" },
+        { id: "title", label: "标题+封面文案", desc: "专业洞察+价值承诺" },
+        { id: "article", label: "图文正文", desc: "视频配套图文，400-600字" },
+        { id: "comment", label: "评论区置顶话术", desc: "建立信任，引导互动" },
+        { id: "moments", label: "朋友圈文案", desc: "100-200字，场景化" }
+      ],
+      wordCount: { oral: "200-300字", article: "400-600字", comment: "50-80字", moments: "100-200字", title: "20-30字" }
+    },
+    xiaohongshu: {
+      id: "xiaohongshu",
+      label: "小红书",
+      note: "生活方式平台 · 轻快节奏 · 图文为主",
+      rhythm: "轻快节奏",
+      hookInterval: "每10秒",
+      sentenceLength: "活泼短句",
+      emotion: "中高",
+      style: "亲和、表情丰富、干货感、朋友口吻",
+      structure: "5秒好奇钩子 → 20秒干货输出 → 10秒案例 → 5秒互动引导",
+      visual: "精美配图、重点高亮、清单式排版",
+      tactics: "利用收藏心理，强调'建议收藏'、'整理好了'",
+      // 小红书支持：图文、标题、评论（无口播、无朋友圈）
+      contentTypes: [
+        { id: "article", label: "图文正文", desc: "300-500字，分段清晰" },
+        { id: "title", label: "✏️ 标题+封面文案", desc: "emoji+干货词+收藏引导" },
+        { id: "comment", label: "📌 评论区置顶话术", desc: "亲和互动，资料引流" }
+      ],
+      wordCount: { article: "300-500字", comment: "40-60字", title: "15-25字" }
+    },
+    zhihu: {
+      id: "zhihu",
+      label: "知乎",
+      note: "知识社区 · 慢节奏深度 · 纯图文",
+      rhythm: "慢节奏",
+      hookInterval: "每段落",
+      sentenceLength: "长句为主，逻辑严密",
+      emotion: "低",
+      style: "理性、数据支撑、专业术语",
+      structure: "问题引入 → 背景分析 → 深度论证 → 数据佐证 → 总结建议",
+      visual: "数据图表、文献引用、结构化排版",
+      tactics: "利用SEO长尾流量，强调专业性和权威性",
+      // 知乎是纯图文社区，不支持口播
+      contentTypes: [
+        { id: "article", label: "📝 图文正文", desc: "600-1000字，深度论证" },
+        { id: "title", label: "✏️ 标题+封面文案", desc: "专业精准，SEO友好" },
+        { id: "comment", label: "📌 评论区置顶话术", desc: "专业延续，深度引导" }
+      ],
+      wordCount: { article: "600-1000字", comment: "80-120字", title: "25-40字" }
+    }
+  }
+};
+
+// 全局状态
+let state = {
+  topic: null,
+  brief: "",
+  platform: null,
+  types: []
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// 图标系统
+// ═══════════════════════════════════════════════════════════════════
+
+function getTopicIcon(id) {
+  const icons = {
+    pilot: '<path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-6a2 2 0 0 1 4 0v6"/>',
+    equipment: '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 6.34L2.1 2.1m17.8 17.8l-4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.24 4.24l-4.24-4.24M6.34 6.34l-4.24-4.24"/>',
+    material: '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+    hospital: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+    strength: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+    onestop: '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',
+    training: '<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',
+    tdts: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>'
+  };
+  return icons[id] || icons.pilot;
+}
+
+function getAudienceIcon(id) {
+  const icons = {
+    pharma_all: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+    tdds_pro: '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>',
+    executive: '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
+    management: '<path d="M12 20v-6M6 20V10M18 20V4"/>',
+    procurement: '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
+    compliance: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+    executive_top: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
+  };
+  return icons[id] || icons.pharma_all;
+}
+
+function getContentTypeIcon(id) {
+  const icons = {
+    oral: '<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>',
+    title: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+    article: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
+    comment: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
+    moments: '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'
+  };
+  return icons[id] || icons.article;
+}
+
+function getPlatformIcon(id) {
+  const icons = {
+    douyin: '<polygon points="6 3 20 12 6 21 6 3"/>',
+    shipinhao: '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+    xiaohongshu: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+    zhihu: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'
+  };
+  return icons[id] || icons.douyin;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 初始化与渲染
+// ═══════════════════════════════════════════════════════════════════
+
+// 检查是否已登录
+function isLoggedIn() {
+  try {
+    const auth = localStorage.getItem('huasheng_auth');
+    if (!auth) return false;
+    const data = JSON.parse(auth);
+    // 检查是否过期（7天）
+    if (Date.now() - data.timestamp > 7 * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem('huasheng_auth');
+      return false;
+    }
+    return data.verified === true;
+  } catch {
+    return false;
+  }
+}
+
+// 保存登录状态
+function saveLoginState() {
+  localStorage.setItem('huasheng_auth', JSON.stringify({
+    verified: true,
+    timestamp: Date.now()
+  }));
+}
+
+// 退出登录
+function logout() {
+  localStorage.removeItem('huasheng_auth');
+  location.reload();
+}
+
+function checkPassword() {
+  const input = document.getElementById("passwordInput").value;
+  if (!CONFIG.ACCESS_PASSWORD || input === CONFIG.ACCESS_PASSWORD) {
+    document.getElementById("passwordGate").classList.add("hidden");
+    saveLoginState();
+  } else {
+    document.getElementById("passwordError").style.display = "block";
+  }
+}
+
+// 页面加载时检查登录状态
+function initAuth() {
+  if (isLoggedIn()) {
+    document.getElementById("passwordGate").classList.add("hidden");
+  }
+}
+
+document.getElementById("passwordInput")?.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") checkPassword();
+});
+
+function renderChips() {
+  // 渲染主题
+  document.getElementById("topicChips").innerHTML = CONFIG.TOPICS.map(t => `
+    <button class="chip ${state.topic === t.id ? 'selected' : ''}"
+      onclick="select('topic','${t.id}')">
+      <div style="display:flex;align-items:center;">
+        <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${getTopicIcon(t.id)}
+        </svg>
+        ${t.label}
+      </div>
+    </button>
+  `).join("");
+
+  // 渲染平台（带图标和悬浮详情提示）
+  const platforms = Object.values(CONFIG.PLATFORMS);
+  document.getElementById("platformChips").innerHTML = platforms.map(p => `
+    <button class="chip ${state.platform === p.id ? 'selected' : ''}"
+      onclick="select('platform','${p.id}')">
+      <div style="display:flex;align-items:center;">
+        <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${getPlatformIcon(p.id)}
+        </svg>
+        ${p.label}
+        <span class="platform-info-wrapper">
+          <span class="platform-info-icon">i</span>
+          <span class="platform-detail">
+            <div class="platform-detail-title">${p.label} · 平台策略</div>
+            <div class="platform-detail-item">
+              <span class="platform-detail-label">节奏</span>
+              <span class="platform-detail-value">${p.rhythm} · ${p.hookInterval}一个钩子</span>
+            </div>
+            <div class="platform-detail-item">
+              <span class="platform-detail-label">句式</span>
+              <span class="platform-detail-value">${p.sentenceLength}</span>
+            </div>
+            <div class="platform-detail-item">
+              <span class="platform-detail-label">情绪</span>
+              <span class="platform-detail-value">${p.emotion}</span>
+            </div>
+            <div class="platform-detail-item">
+              <span class="platform-detail-label">风格</span>
+              <span class="platform-detail-value">${p.style}</span>
+            </div>
+          </span>
+        </span>
+      </div>
+      <span class="chip-note">${p.note}</span>
+    </button>
+  `).join("");
+
+  // 渲染内容类型（根据平台动态）
+  renderContentTypes();
+
+  // 更新按钮状态
+  const canGen = state.topic && state.brief.trim() && state.platform && state.types.length > 0;
+  document.getElementById("genBtn").disabled = !canGen;
+  document.getElementById("genHint").style.display = canGen ? "none" : "block";
+
+  // 更新步骤条激活状态
+  updateStepIndicators();
+}
+
+// 更新步骤指示器状态
+function updateStepIndicators() {
+  const sections = document.querySelectorAll('.section');
+
+  // 步骤1: 主题
+  if (state.topic) {
+    sections[0].classList.add('completed');
+    sections[0].classList.remove('active');
+    sections[1].classList.add('active');
+  } else {
+    sections[0].classList.add('active');
+    sections[0].classList.remove('completed');
+    sections[1].classList.remove('active');
+  }
+
+  // 步骤2: 素材描述
+  if (state.brief.trim()) {
+    sections[1].classList.add('completed');
+    sections[1].classList.remove('active');
+    if (state.topic) sections[2].classList.add('active');
+  } else {
+    sections[1].classList.remove('completed');
+    if (state.topic) sections[1].classList.add('active');
+    sections[2].classList.remove('active');
+  }
+
+  // 步骤3: 平台
+  if (state.platform) {
+    sections[2].classList.add('completed');
+    sections[2].classList.remove('active');
+    if (state.topic && state.brief.trim()) sections[3].classList.add('active');
+  } else {
+    sections[2].classList.remove('completed');
+    if (state.brief.trim()) sections[2].classList.add('active');
+    sections[3].classList.remove('active');
+  }
+
+  // 步骤4: 内容类型
+  if (state.types.length > 0) {
+    sections[3].classList.add('completed');
+    sections[3].classList.remove('active');
+  } else {
+    sections[3].classList.remove('completed');
+    if (state.platform) sections[3].classList.add('active');
+  }
+}
+
+// 动态渲染内容类型 - 根据平台选择
+function renderContentTypes() {
+  const sectionEl = document.getElementById("contentTypeSection");
+  const chipsEl = document.getElementById("typeChips");
+  const hintEl = document.getElementById("contentTypeHint");
+
+  if (!state.platform) {
+    sectionEl.style.opacity = "0.5";
+    chipsEl.innerHTML = "";
+    hintEl.textContent = "请先选择发布平台，内容类型将根据平台特性自动适配";
+    hintEl.style.display = "block";
+    return;
+  }
+
+  // 平台已选择，启用内容类型区域
+  sectionEl.style.opacity = "1";
+  hintEl.style.display = "none";
+
+  const p = CONFIG.PLATFORMS[state.platform];
+
+  // 渲染该平台支持的内容类型（带图标）
+  chipsEl.innerHTML = p.contentTypes.map(c => `
+    <button class="chip ${state.types.includes(c.id) ? 'selected' : ''}"
+      onclick="toggleType('${c.id}')">
+      <div style="display:flex;align-items:center;">
+        <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${getContentTypeIcon(c.id)}
+        </svg>
+        ${c.label}
+      </div>
+      <span class="chip-note">${c.desc}</span>
+    </button>
+  `).join("");
+}
+
+function select(field, id) {
+  // 如果切换平台，清空已选内容类型
+  if (field === 'platform' && state.platform !== id) {
+    state.types = [];
+  }
+  state[field] = id;
+  renderChips();
+}
+
+function toggleType(id) {
+  if (state.types.includes(id)) {
+    state.types = state.types.filter(x => x !== id);
+  } else {
+    state.types.push(id);
+  }
+  renderChips();
+}
+
+document.getElementById("briefInput")?.addEventListener("input", (e) => {
+  state.brief = e.target.value;
+  renderChips();
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Prompt构建 - 核心逻辑
+// ═══════════════════════════════════════════════════════════════════
+
+function buildPrompt() {
+  const topic = CONFIG.TOPICS.find(t => t.id === state.topic);
+  const platform = CONFIG.PLATFORMS[state.platform];
+  const company = CONFIG.COMPANY;
+  const brief = state.brief.trim();
+
+  // 获取平台字数要求
+  const wordCount = platform.wordCount;
+
+  return `【角色设定】
+你是华胜品牌内容团队一员，代表华胜对外发声。华胜始创于1993年，30余年来持续深耕外用制剂领域，业务覆盖设备、中试转化、工艺放大与配套服务。中试基地是华胜能力体系中的关键模块之一，但不等于华胜全部业务。
+
+【华胜背景资料】（按相关性自然融入，不要每条都机械堆砌）
+- 品牌口号：${company.slogan}
+- 品牌积累：始创于${company.founded}，${company.history}持续深耕外用制剂领域
+- 中试基地：${company.pilotBase.main}，${company.pilotBase.cleanroom}
+- 品牌定位：${company.positioning}
+
+【内容生成参数】
+主题：${topic.label}
+视频素材/表达重点：${brief}
+平台：${platform.label}
+内容类型：${state.types.map(t => getContentTypeName(t)).join("、")}
+
+【品牌层级要求】
+- 默认主体是“华胜”这一整体品牌，不要默认把华胜写成只有中试基地
+- 当素材明确展示基地、车间、实验室、中试服务时，可以突出“中试基地”这一能力模块
+- 当素材更偏设备、包材、院内制剂、行业认知或一站式服务时，应回到华胜整体解决方案视角
+- 可以写“华胜具备中试转化能力”，不要写成“华胜只做中试”
+
+【平台风格要求 - 必须严格执行】
+- 节奏：${platform.rhythm}，${platform.hookInterval}必须有一个钩子
+- 句式：${platform.sentenceLength}
+- 情绪强度：${platform.emotion}
+- 语言风格：${platform.style}
+- 结构模板：${platform.structure}
+- 平台策略：${platform.tactics}
+
+【总口吻原则】
+- 优先服从当前平台的表达习惯，但整体保持专业、可信、克制的B端品牌气质
+- 可以更口语化，但不要油腻、浮夸、喊口号、过度像泛流量营销号
+- 可以有冲突感和传播感，但结论要落在专业判断、业务价值或解决方案上
+- 不要为了迎合平台牺牲真实性和专业度
+
+【字数要求】
+${Object.entries(wordCount).map(([type, count]) => `- ${getContentTypeName(type)}：${count}`).join("\n")}
+
+【素材理解要求】
+- 先根据“视频素材/表达重点”判断这条内容更适合讲设备展示、工艺能力、案例背书、基地实力还是行业认知
+- “主题”只用于限定业务范围，不代表固定标签、固定卖点或固定开场
+- 优先围绕素材真实内容组织表达，不要被固定卖点带偏
+- 同一条内容最多突出1-2个核心卖点
+- 没有明确数据来源，不要虚构具体金额、百分比、节省天数
+- 没有检索或资料支撑时，不要主动补充具体设备能力、洁净等级、清洗效率或成本节省数据
+- 如果素材更适合讲专业性、稳定性、合规性、自动化，就不要硬转成“省钱文案”
+
+【开场要求】
+- 开场必须从当前视频素材或表达重点中提炼，不要套用预设钩子库
+- 可以用问题、反常识、场景切入、结果切入，但必须和素材内容直接相关
+
+【立场要求】
+- 不说"我是专家"，说"华胜30余年经验发现..."
+- 不提具体技术团队成员姓名
+- 可以说"与国内顶尖研究机构共建"
+- 用"我们"代表华胜团队，不用"我"
+
+【品牌用词规范】
+- 必用："30余年"（不说30年）、"全链路"、"交钥匙工程"、"一站式"
+- 禁用："最好"、"第一"、"最强"（易违规）
+- 合规：不替客户做疗效声称，不说具体配方工艺
+
+【业务战略补充】（遇到相关主题时优先吸收）
+- 华胜对中试环节的定位：连接研发与产业化的关键节点，提供从实验室到商业化生产的桥梁服务
+- 三大业务抓手：设备端（制药中试设备的研发、制造与销售）；服务端（院内制剂的中试工艺开发与验证）；技术平台（建设中试技术服务平台，提供一站式解决方案）
+- 核心能力：工艺放大技术能力、质量控制与验证体系、法规合规与注册申报支持、项目管理与产业化转移能力
+- 表达导向：突出“降低放大风险、缩短转化周期、提升合规确定性、减少试错成本”
+- 合作表达：可写科研院所、医疗机构深度合作，可写示范项目、区域服务中心、生态协同，但不要虚构具体客户名称、项目数量和收益数据
+
+【本次主题优先切入角度】
+${buildStrategicFocus(topic.id)}
+
+【内容类型具体要求】
+${buildContentRequirements(platform, state.types)}
+
+【输出格式】
+严格按以下内容类型输出，每个模块用【】标注：
+${state.types.map(t => `【${getContentTypeName(t)}】`).join("\n")}
+`;
+}
+
+function buildStrategicFocus(topicId) {
+  const focusMap = {
+    pilot: [
+      "强调中试是连接研发与产业化的桥梁，不只讲场地和设备，更要讲工艺放大、验证和转移能力",
+      "可从失败成本、项目周期、放大风险、数据衔接四个角度切入",
+      "自然带出华胜开放式共享基地、一站式平台、示范项目承接能力"
+    ],
+    hospital: [
+      "重点突出院内制剂中试工艺开发、验证放大、备案配套、GMP/合规支持",
+      "强调医院药剂科从立项到备案再到稳定制备的全流程协同价值",
+      "表达上优先呈现“降低备案阻力、减少试制反复、提升落地确定性”"
+    ],
+    equipment: [
+      "不仅讲设备参数，还要强调设备如何服务中试放大、质量一致性和后续产业化",
+      "可从换型效率、验证友好、运维成本、规模复制能力切入"
+    ],
+    onestop: [
+      "强化技术平台思维，不只是一站式采购，而是设备、耗材、包材、中试服务协同",
+      "重点说明多环节协同能减少沟通损耗、缩短项目周期、降低系统性风险"
+    ],
+    strength: [
+      "企业实力不止是资历和客户数，还要体现标准化服务能力、技术沉淀和产业化转移能力",
+      "可适度映射中长期目标，如区域服务中心、生态协同、国际化视野，但不夸大"
+    ],
+    tdts: [
+      "行业解读要尽量落到中试转化和产业落地，不只谈趋势概念",
+      "优先建立“研发成功不等于中试成功”的认知，再导入华胜价值"
+    ]
+  };
+
+  const focus = focusMap[topicId] || [
+    "围绕“中试连接研发与产业化”来组织观点",
+    "自然体现华胜在设备、服务、平台三端协同的价值",
+    "优先输出对客户决策有帮助的判断，而不是泛泛宣传"
+  ];
+
+  return focus.map((item, index) => `${index + 1}. ${item}`).join("\\n");
+}
+
+function buildContentRequirements(platform, types) {
+  const reqs = [];
+
+  types.forEach(type => {
+    switch(type) {
+      case "oral":
+        reqs.push(`【口播脚本 - ${platform.label}版】
+- 字数：${platform.wordCount.oral}
+- 节奏：${platform.rhythm}，${platform.hookInterval}一个转折点
+- 开头：必须从钩子库中选一个强钩子开场
+- 中间：痛点放大+华胜解决方案（自然植入与当前主题相关的华胜背景和证据）
+- 结尾：分层引导（泛层关注/垂直层扣关键词/决策层私信）
+- 句式：${platform.sentenceLength}
+- 禁用：${platform.id === 'douyin' ? '长句、复杂从句、过多数据、低质喊麦式营销腔' : platform.id === 'zhihu' ? '情绪化表达、过于口语化' : '过于生硬的广告、泛流量号语气'}`);
+        break;
+      case "title":
+        reqs.push(`【视频标题 - ${platform.label}版】
+- 数量：3个备选
+- 字数：${platform.wordCount.title}
+- 要求：${platform.id === 'douyin' ? '数字+冲突+情绪词，如"90%死在这"、"血亏300万"' : platform.id === 'xiaohongshu' ? 'emoji+干货词+收藏引导' : platform.id === 'zhihu' ? '专业术语+完整问题，SEO友好' : '专业+洞察+价值承诺'}
+
+【封面文案】
+- 字数：10-15字
+- 风格：${platform.id === 'douyin' ? '大字报数字冲击' : '核心观点提炼'}
+- 必带：冲突感或悬念`);
+        break;
+      case "article":
+        reqs.push(`【图文正文 - ${platform.label}版】
+- 字数：${platform.wordCount.article}
+- 结构：${platform.structure.replace(/\d+秒/g, match => {
+          const seconds = parseInt(match);
+          if (platform.id === 'douyin') return seconds < 100 ? '50-100字' : '150-200字';
+          if (platform.id === 'zhihu') return seconds < 100 ? '100-150字' : '300-500字';
+          return '合理分配';
+        })}
+- 格式：${platform.id === 'xiaohongshu' ? '多用emoji分段，清单式排版' : platform.id === 'zhihu' ? '标题层级、数据标注来源' : '段落清晰，每段不超过3-5行'}
+- 植入：自然融入与当前主题相关的华胜背景资料（如30余年、基地能力、整体解决方案等）`);
+        break;
+      case "comment":
+        reqs.push(`【评论区置顶话术 - ${platform.label}版】
+- 字数：${platform.wordCount.comment}
+- 风格：${platform.id === 'douyin' ? '口语化、紧迫感、"评论区扣XX"' : platform.id === 'xiaohongshu' ? 'emoji、亲和、"整理好了"' : platform.id === 'zhihu' ? '专业、价值延续、深度引导' : '有温度、建立信任'}
+- 类型：资料引流型/互动争议型/参观预约型
+- 禁用：低质促单感、喊口号式互动诱导`);
+        break;
+      case "moments":
+        reqs.push(`【朋友圈文案 - ${platform.label}版】
+- 字数：${platform.wordCount.moments}
+- 结构：场景引入 → 反常识观点 → 华胜植入 → 分层引导
+- 人设：华胜团队一员，专业但不高冷
+- 配图建议：车间实拍/设备运行/客户案例/团队工作`);
+        break;
+    }
+  });
+
+  return reqs.join("\n\n");
+}
+
+function getContentTypeName(id) {
+  const names = {
+    oral: "口播脚本",
+    title: "标题+封面文案",
+    article: "图文正文",
+    comment: "评论区置顶话术",
+    moments: "朋友圈文案"
+  };
+  return names[id] || id;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 生成与渲染
+// ═══════════════════════════════════════════════════════════════════
+
+async function generate() {
+  const output = document.getElementById("outputArea");
+  output.innerHTML = `<div class="loading"><span class="spinner"></span>正在生成内容，请稍等...</div>`;
+  output.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  try {
+    const prompt = buildPrompt();
+    console.log("Generated Prompt:", prompt); // 调试用
+
+    const res = await fetch(CONFIG.API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        topic: state.topic,
+        brief: state.brief.trim(),
+        platform: state.platform,
+        types: state.types,
+        prompt: prompt
+      }),
+    });
+
+    if (!res.ok) throw new Error(`服务暂时不可用 (${res.status})`);
+
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "生成失败");
+
+    renderResults(data.content, data.feishu || null);
+
+  } catch (e) {
+    output.innerHTML = `<div class="error-box">生成失败：${e.message}<br>请稍后重试，或联系技术支持。</div>`;
+  }
+}
+
+// 全局存储当前生成内容的 recordId 和内容
+let currentRecord = { id: null, content: null, feishu: null };
+
+function renderResults(text, feishu = null) {
+  const sectionMap = {
+    "口播脚本": { id: "oral", color: "#c4a77d" },
+    "视频标题": { id: "title", color: "#a8b5a0" },
+    "封面文案": { id: "cover", color: "#b8a89a" },
+    "图文正文": { id: "article", color: "#9fb4a0" },
+    "评论区置顶话术": { id: "comment", color: "#d4b896" },
+    "朋友圈文案": { id: "moments", color: "#c9a689" }
+  };
+
+  const parts = text.split(/【([^】]+)】/);
+  const blocks = [];
+
+  for (let i = 1; i < parts.length - 1; i += 2) {
+    const label = parts[i].trim();
+    const content = parts[i + 1].trim();
+    const meta = sectionMap[label] || { color: "#c4a77d" };
+    if (content) blocks.push({ label, content, color: meta.color });
+  }
+
+  if (blocks.length === 0) {
+    blocks.push({ label: "生成结果", content: text, color: "#c4a77d" });
+  }
+
+  // 保存当前记录信息
+  currentRecord.id = feishu?.recordId || null;
+  currentRecord.content = text;
+  currentRecord.feishu = feishu;
+
+  const feishuHtml = feishu?.saved ? `
+    <div class="feishu-result">
+      <div class="feishu-success">
+        <div class="feishu-success-content">
+          <div class="feishu-success-icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="feishu-success-title">已自动保存到飞书多维表格</div>
+        </div>
+        ${feishu.link ? `<a href="${feishu.link}" target="_blank" class="feishu-link">查看记录</a>` : ""}
+      </div>
+    </div>
+  ` : `
+    <div class="feishu-save-box" id="feishuBox">
+      <button class="feishu-save-btn" onclick="saveToFeishu()" id="feishuBtn">
+        保存到飞书多维表格
+      </button>
+      <div class="feishu-hint">${feishu?.error ? `自动保存失败，可点击重试：${escHtml(feishu.error)}` : "点击保存，可在飞书查看和管理历史记录"}</div>
+    </div>
+    <div class="feishu-result hidden" id="feishuResult"></div>
+  `;
+
+  const html = `
+    <div class="result-divider">
+      <span class="result-divider-text">生成结果 — 点击右上角「复制」直接使用</span>
+    </div>
+
+    ${feishuHtml}
+
+    ${blocks.map((b, i) => `
+      <div class="result-block">
+        <div class="result-block-header" style="background:${b.color}">
+          <span class="result-block-label">${b.label}</span>
+          <button class="copy-btn" onclick="copyBlock(${i})">复制</button>
+        </div>
+        <div class="result-block-body" id="block-${i}">${escHtml(b.content)}</div>
+      </div>
+    `).join("")}
+    <div class="retry-hint" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" style="cursor: pointer;">不满意？调整参数重新生成 ↑</div>
+  `;
+
+  document.getElementById("outputArea").innerHTML = html;
+}
+
+// 保存到飞书
+async function saveToFeishu() {
+  if (!currentRecord.content) {
+    alert("请先生成内容，再保存到飞书");
+    return;
+  }
+
+  const btn = document.getElementById("feishuBtn");
+  const box = document.getElementById("feishuBox");
+  const result = document.getElementById("feishuResult");
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></span>保存中...`;
+
+  try {
+    const res = await fetch(CONFIG.API_URL + "?action=save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        topic: state.topic,
+        brief: state.brief.trim(),
+        platform: state.platform,
+        types: state.types,
+        content: currentRecord.content
+      }),
+    });
+
+    if (!res.ok) throw new Error(`服务暂时不可用 (${res.status})`);
+
+    const data = await res.json();
+
+    if (data.success && data.feishu?.saved) {
+      currentRecord.id = data.feishu.recordId || null;
+      currentRecord.feishu = data.feishu;
+      box.style.display = "none";
+      result.classList.remove("hidden");
+      result.innerHTML = `
+        <div class="feishu-success">
+          <div class="feishu-success-content">
+            <div class="feishu-success-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <div class="feishu-success-title">已保存到飞书多维表格</div>
+          </div>
+          ${data.feishu.link ? `<a href="${data.feishu.link}" target="_blank" class="feishu-link">查看记录</a>` : ""}
+        </div>
+      `;
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = "保存到飞书多维表格";
+      alert("保存失败：" + (data.feishu?.error || data.error || "未知错误"));
+    }
+  } catch (e) {
+    btn.disabled = false;
+    btn.innerHTML = "保存到飞书多维表格";
+    alert("保存失败：" + e.message);
+  }
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function copyBlock(i) {
+  const el = document.getElementById(`block-${i}`);
+  const text = el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.previousElementSibling.querySelector(".copy-btn");
+    const orig = btn.textContent;
+    btn.textContent = "已复制";
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+// 初始化
+initAuth();
+renderChips();
+// 设置初始激活状态
+document.querySelector('.section')?.classList.add('active');
+</script>
+</body>
+</html>
