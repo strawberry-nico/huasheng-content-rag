@@ -15,3 +15,5 @@ node_modules/
 knowledge-data.generated.json
 AI自媒体内容生成工具PRD模版.md
 机械制造企业知识库RAG系统实践思考.md
+conversation/
+doc/

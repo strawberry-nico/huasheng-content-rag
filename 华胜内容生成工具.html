@@ -149,81 +149,6 @@
     letter-spacing: 0.02em;
   }
 
-  /* ── Password Gate ── */
-  .password-gate {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--bg-paper);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-  }
-  .password-box {
-    background: var(--bg-card);
-    padding: var(--space-12) var(--space-10);
-    width: 90%;
-    max-width: 420px;
-    text-align: center;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.04);
-  }
-  .password-title {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: var(--text-ink);
-    margin-bottom: var(--space-2);
-    letter-spacing: 0.05em;
-  }
-  .password-hint {
-    font-size: 0.9375rem;
-    color: var(--text-meta);
-    margin-bottom: var(--space-10);
-    font-family: var(--font-sans);
-  }
-  .password-input {
-    width: 100%;
-    padding: var(--space-4) var(--space-5);
-    border: 1px solid var(--line-paper);
-    border-radius: 4px;
-    font-size: 1.125rem;
-    text-align: center;
-    letter-spacing: 0.3em;
-    margin-bottom: var(--space-5);
-    background: var(--bg-warm);
-    transition: all var(--transition);
-    font-family: var(--font-sans);
-  }
-  .password-input:focus {
-    outline: none;
-    border-color: var(--accent-gold);
-    background: var(--bg-card);
-  }
-  .password-input::placeholder {
-    color: var(--text-muted);
-    letter-spacing: 0.15em;
-  }
-  .password-btn {
-    width: 100%;
-    padding: var(--space-4) var(--space-5);
-    background: var(--accent-gold);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.9375rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition);
-    font-family: var(--font-sans);
-  }
-  .password-btn:hover { background: var(--accent-warm); }
-  .password-error {
-    color: var(--error);
-    font-size: 0.875rem;
-    margin-top: var(--space-4);
-    display: none;
-    font-family: var(--font-sans);
-  }
-
   /* ── Main Layout ── */
   .main {
     max-width: 1100px;
@@ -770,6 +695,144 @@
     font-family: var(--font-serif);
   }
 
+  .knowledge-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--line-paper);
+    margin-bottom: var(--space-5);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  }
+  .intent-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--line-paper);
+    margin-bottom: var(--space-5);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  }
+  .intent-panel summary {
+    list-style: none;
+    cursor: pointer;
+    padding: var(--space-4) var(--space-5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .intent-panel summary::-webkit-details-marker {
+    display: none;
+  }
+  .intent-panel summary::after {
+    content: "展开";
+    font-size: 0.75rem;
+    color: var(--text-meta);
+    font-family: var(--font-sans);
+  }
+  .intent-panel[open] summary::after {
+    content: "收起";
+  }
+  .intent-panel-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-ink);
+    letter-spacing: 0.04em;
+  }
+  .intent-panel-sub {
+    font-size: 0.75rem;
+    color: var(--text-meta);
+    font-family: var(--font-sans);
+  }
+  .intent-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    padding: 0 var(--space-5) var(--space-5);
+  }
+  .intent-card {
+    background: var(--bg-warm);
+    border: 1px solid var(--line-paper);
+    padding: var(--space-4);
+    border-radius: 4px;
+  }
+  .intent-card-label {
+    font-size: 0.6875rem;
+    color: var(--text-meta);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--font-sans);
+    margin-bottom: var(--space-2);
+  }
+  .intent-card-value {
+    font-size: 0.875rem;
+    color: var(--text-ink);
+    line-height: 1.7;
+    word-break: break-word;
+  }
+  .knowledge-panel-header {
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--line-paper);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+  .knowledge-panel-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-ink);
+    letter-spacing: 0.04em;
+  }
+  .knowledge-panel-sub {
+    font-size: 0.75rem;
+    color: var(--text-meta);
+    font-family: var(--font-sans);
+  }
+  .knowledge-groups {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+    padding: var(--space-5);
+  }
+  .knowledge-group {
+    background: var(--bg-warm);
+    border: 1px solid var(--line-paper);
+    padding: var(--space-4);
+  }
+  .knowledge-group-title {
+    font-size: 0.75rem;
+    color: var(--text-meta);
+    margin-bottom: var(--space-3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-family: var(--font-sans);
+  }
+  .knowledge-item {
+    padding: var(--space-3) 0;
+    border-top: 1px dashed var(--line-paper);
+  }
+  .knowledge-item:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+  .knowledge-item-title {
+    font-size: 0.875rem;
+    color: var(--text-ink);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+  }
+  .knowledge-item-meta {
+    font-size: 0.75rem;
+    color: var(--text-meta);
+    margin-bottom: var(--space-2);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+  }
+  .knowledge-item-content {
+    font-size: 0.8125rem;
+    color: var(--text-soft);
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
   .retry-hint {
     text-align: center;
     font-size: 0.8125rem;
@@ -794,7 +857,7 @@
 
   .hidden { display: none !important; }
 
-  @media (max-width: 768px) {
+	  @media (max-width: 768px) {
     .main {
       padding: var(--space-8) var(--space-4) var(--space-12);
     }
@@ -807,7 +870,13 @@
     .section[data-section="topic"] .chips {
       grid-template-columns: repeat(2, 1fr);
     }
-  }
+	    .knowledge-groups {
+	      grid-template-columns: 1fr;
+	    }
+	    .intent-grid {
+	      grid-template-columns: 1fr;
+	    }
+	  }
 
   /* ── Feishu Save Button ── */
   .feishu-save-box {
@@ -899,17 +968,6 @@
 </head>
 <body>
 
-<!-- Password Gate -->
-<div class="password-gate" id="passwordGate">
-  <div class="password-box">
-    <div class="password-title">华胜内容生产工作台</div>
-    <div class="password-hint">请输入访问密码</div>
-    <input type="password" class="password-input" id="passwordInput" placeholder="••••••">
-    <button class="password-btn" onclick="checkPassword()">进入工作台</button>
-    <div class="password-error" id="passwordError">密码错误，请重试</div>
-  </div>
-</div>
-
 <!-- Header -->
 <div class="header">
   <div class="header-inner">
@@ -939,7 +997,7 @@
         class="brief-input"
         placeholder="例如：视频是凝胶贴膏设备运行实拍，重点想表达自动化程度高、换型效率高、适合中试放大，不要总是强调省钱。"
       ></textarea>
-      <div class="brief-hint">写清视频里拍了什么、你想突出什么、不要突出什么。这个描述会直接进入最终提示词。</div>
+      <div class="brief-hint">写清视频里拍了什么、你想突出什么、不要突出什么。这个输入是主命令，系统会优先服从它。</div>
     </div>
 
     <!-- 平台 -->
@@ -952,14 +1010,14 @@
     <div class="section" id="contentTypeSection" data-section="type" style="opacity: 0.5;">
       <div class="section-label" data-step="4">内容类型（可多选）</div>
       <div class="chips" id="typeChips"></div>
-      <div id="contentTypeHint" class="content-type-hint">请先选择发布平台，内容类型将根据平台特性自动适配</div>
+      <div id="contentTypeHint" class="content-type-hint">请先选择发布平台。内容类型只决定输出形式，不决定内容主轴。</div>
     </div>
 
     <!-- Button -->
     <button class="gen-btn" id="genBtn" onclick="generate()" disabled>
       一键生成内容物料
     </button>
-    <div class="gen-hint" id="genHint">请完成主题 / 素材描述 / 平台选择，并至少选一种内容类型</div>
+    <div class="gen-hint" id="genHint">请填写素材描述，再选择主题、平台和内容类型。</div>
 
   </div>
 
@@ -986,7 +1044,6 @@ function resolveApiBaseUrl() {
 const CONFIG = {
   // API配置
   API_URL: resolveApiBaseUrl(),
-  ACCESS_PASSWORD: "huasheng2026",
 
   // ═════════════════════════════════════════════════════════════════
   // 【主题配置】
@@ -1009,68 +1066,68 @@ const CONFIG = {
     douyin: {
       id: "douyin",
       label: "抖音",
-      note: "短视频平台 · 极快节奏 · 3秒定生死",
+      note: "短视频平台 · 节奏快 · 适合强切口短表达",
       rhythm: "极快节奏",
       hookInterval: "每5秒",
       sentenceLength: "每句不超过12字",
       emotion: "极高",
       style: "口语化短句、情绪强烈、网络热词",
-      structure: "3秒致命钩子 → 15秒痛点放大 → 10秒解决方案 → 5秒强引导",
+      structure: "快速切入 → 重点展开 → 自然收住",
       visual: "大字报字幕、音效提示、快节奏切换",
-      tactics: "利用完播率算法，前3秒必须制造认知冲突",
+      tactics: "前段要尽快进入重点，但不要为了冲突硬写过头",
       // 抖音只支持：口播脚本、标题+封面
       contentTypes: [
-        { id: "oral", label: "口播脚本", desc: "150-200字，短句如机关枪" },
-        { id: "title", label: "标题+封面文案", desc: "3个备选，冲突感强" }
+        { id: "oral", label: "口播脚本", desc: "80-140字，短句清楚，别写满" },
+        { id: "title", label: "标题+封面文案", desc: "3个备选，简洁直接" }
       ],
-      wordCount: { oral: "150-200字", title: "15-25字" }
+      wordCount: { oral: "80-140字", title: "15-25字" }
     },
     shipinhao: {
       id: "shipinhao",
       label: "视频号",
-      note: "微信生态 · B端深度 · 专业+人情味",
+      note: "微信生态 · 适合专业表达 · 但别写成汇报稿",
       rhythm: "中等节奏",
       hookInterval: "每15秒",
       sentenceLength: "长短句结合",
       emotion: "中等",
       style: "专业但不刻板，有温度，用'我们'拉近距离",
-      structure: "10秒问题引入 → 30秒深度分析 → 15秒案例佐证 → 5秒信任引导",
-      visual: "数据可视化、案例图片、专家背书",
-      tactics: "利用社交关系链，强调'同行都在看'",
+      structure: "问题引入 → 重点说明 → 自然收束",
+      visual: "画面清楚、重点明确、别过度装饰",
+      tactics: "重在可信和自然，不要硬做权威背书",
       // 视频号支持全链路（微信生态）
       contentTypes: [
-        { id: "oral", label: "口播脚本", desc: "200-300字，专业有温度" },
-        { id: "title", label: "标题+封面文案", desc: "专业洞察+价值承诺" },
-        { id: "article", label: "图文正文", desc: "视频配套图文，400-600字" },
-        { id: "comment", label: "评论区置顶话术", desc: "建立信任，引导互动" },
-        { id: "moments", label: "朋友圈文案", desc: "100-200字，场景化" }
+        { id: "oral", label: "口播脚本", desc: "120-180字，专业自然，别太满" },
+        { id: "title", label: "标题+封面文案", desc: "明确主题，不要许诺过多" },
+        { id: "article", label: "图文正文", desc: "视频配套图文，围绕一个主轴" },
+        { id: "comment", label: "评论区置顶话术", desc: "延续正文，不另起新主题" },
+        { id: "moments", label: "朋友圈文案", desc: "100-200字，像真实业务判断" }
       ],
-      wordCount: { oral: "200-300字", article: "400-600字", comment: "50-80字", moments: "100-200字", title: "20-30字" }
+      wordCount: { oral: "120-180字", article: "400-600字", comment: "50-80字", moments: "100-200字", title: "20-30字" }
     },
     xiaohongshu: {
       id: "xiaohongshu",
       label: "小红书",
-      note: "生活方式平台 · 轻快节奏 · 图文为主",
+      note: "轻快表达 · 图文为主 · 不要过度包装",
       rhythm: "轻快节奏",
       hookInterval: "每10秒",
       sentenceLength: "活泼短句",
       emotion: "中高",
       style: "亲和、表情丰富、干货感、朋友口吻",
-      structure: "5秒好奇钩子 → 20秒干货输出 → 10秒案例 → 5秒互动引导",
+      structure: "轻快切入 → 清楚展开 → 自然收束",
       visual: "精美配图、重点高亮、清单式排版",
-      tactics: "利用收藏心理，强调'建议收藏'、'整理好了'",
+      tactics: "清楚、轻快、好读，别硬做收藏诱导",
       // 小红书支持：图文、标题、评论（无口播、无朋友圈）
       contentTypes: [
         { id: "article", label: "图文正文", desc: "300-500字，分段清晰" },
-        { id: "title", label: "✏️ 标题+封面文案", desc: "emoji+干货词+收藏引导" },
-        { id: "comment", label: "📌 评论区置顶话术", desc: "亲和互动，资料引流" }
+        { id: "title", label: "✏️ 标题+封面文案", desc: "清楚好懂，别堆词" },
+        { id: "comment", label: "📌 评论区置顶话术", desc: "亲和互动，补一句就够" }
       ],
       wordCount: { article: "300-500字", comment: "40-60字", title: "15-25字" }
     },
     zhihu: {
       id: "zhihu",
       label: "知乎",
-      note: "知识社区 · 慢节奏深度 · 纯图文",
+      note: "知识社区 · 深度图文 · 重点是讲清楚",
       rhythm: "慢节奏",
       hookInterval: "每段落",
       sentenceLength: "长句为主，逻辑严密",
@@ -1078,12 +1135,12 @@ const CONFIG = {
       style: "理性、数据支撑、专业术语",
       structure: "问题引入 → 背景分析 → 深度论证 → 数据佐证 → 总结建议",
       visual: "数据图表、文献引用、结构化排版",
-      tactics: "利用SEO长尾流量，强调专业性和权威性",
+      tactics: "重点是讲清逻辑，不是堆术语和权威感",
       // 知乎是纯图文社区，不支持口播
       contentTypes: [
-        { id: "article", label: "📝 图文正文", desc: "600-1000字，深度论证" },
-        { id: "title", label: "✏️ 标题+封面文案", desc: "专业精准，SEO友好" },
-        { id: "comment", label: "📌 评论区置顶话术", desc: "专业延续，深度引导" }
+        { id: "article", label: "📝 图文正文", desc: "600-1000字，逻辑清楚，不堆概念" },
+        { id: "title", label: "✏️ 标题+封面文案", desc: "专业精准，别写太硬" },
+        { id: "comment", label: "📌 评论区置顶话术", desc: "延续正文，补一句就够" }
       ],
       wordCount: { article: "600-1000字", comment: "80-120字", title: "25-40字" }
     }
@@ -1141,58 +1198,6 @@ function getPlatformIcon(id) {
 // 初始化与渲染
 // ═══════════════════════════════════════════════════════════════════
 
-// 检查是否已登录
-function isLoggedIn() {
-  try {
-    const auth = localStorage.getItem('huasheng_auth');
-    if (!auth) return false;
-    const data = JSON.parse(auth);
-    // 检查是否过期（7天）
-    if (Date.now() - data.timestamp > 7 * 24 * 60 * 60 * 1000) {
-      localStorage.removeItem('huasheng_auth');
-      return false;
-    }
-    return data.verified === true;
-  } catch {
-    return false;
-  }
-}
-
-// 保存登录状态
-function saveLoginState() {
-  localStorage.setItem('huasheng_auth', JSON.stringify({
-    verified: true,
-    timestamp: Date.now()
-  }));
-}
-
-// 退出登录
-function logout() {
-  localStorage.removeItem('huasheng_auth');
-  location.reload();
-}
-
-function checkPassword() {
-  const input = document.getElementById("passwordInput").value;
-  if (!CONFIG.ACCESS_PASSWORD || input === CONFIG.ACCESS_PASSWORD) {
-    document.getElementById("passwordGate").classList.add("hidden");
-    saveLoginState();
-  } else {
-    document.getElementById("passwordError").style.display = "block";
-  }
-}
-
-// 页面加载时检查登录状态
-function initAuth() {
-  if (isLoggedIn()) {
-    document.getElementById("passwordGate").classList.add("hidden");
-  }
-}
-
-document.getElementById("passwordInput")?.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") checkPassword();
-});
-
 function renderChips() {
   // 渲染主题
   document.getElementById("topicChips").innerHTML = CONFIG.TOPICS.map(t => `
@@ -1220,7 +1225,7 @@ function renderChips() {
         <span class="platform-info-wrapper">
           <span class="platform-info-icon">i</span>
           <span class="platform-detail">
-            <div class="platform-detail-title">${p.label} · 平台策略</div>
+            <div class="platform-detail-title">${p.label} · 平台约束</div>
             <div class="platform-detail-item">
               <span class="platform-detail-label">节奏</span>
               <span class="platform-detail-value">${p.rhythm} · ${p.hookInterval}一个钩子</span>
@@ -1312,7 +1317,7 @@ function renderContentTypes() {
   if (!state.platform) {
     sectionEl.style.opacity = "0.5";
     chipsEl.innerHTML = "";
-    hintEl.textContent = "请先选择发布平台，内容类型将根据平台特性自动适配";
+    hintEl.textContent = "请先选择发布平台。内容类型只控制输出形式，不决定内容主轴。";
     hintEl.style.display = "block";
     return;
   }
@@ -1382,7 +1387,7 @@ async function generate() {
   output.scrollIntoView({ behavior: "smooth", block: "start" });
 
   try {
-    const res = await fetch(CONFIG.API_URL + "/", {
+    const res = await fetch(CONFIG.API_URL + "/agent/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1398,7 +1403,14 @@ async function generate() {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || "生成失败");
 
-    renderResults(data.content, data.feishu || null);
+    renderResults(
+      data.content,
+      data.feishu || null,
+      data.retrievedKnowledge || null,
+      data.knowledgeSource || "",
+      data.trace?.intent || null,
+      data.agentTrace?.plan || null
+    );
 
   } catch (e) {
     output.innerHTML = `<div class="error-box">生成失败：${e.message}<br>请稍后重试，或联系技术支持。</div>`;
@@ -1406,9 +1418,9 @@ async function generate() {
 }
 
 // 全局存储当前生成内容的 recordId 和内容
-let currentRecord = { id: null, content: null, feishu: null };
+let currentRecord = { id: null, content: null, feishu: null, retrievedKnowledge: null, intentTrace: null, agentPlan: null };
 
-function renderResults(text, feishu = null) {
+function renderResults(text, feishu = null, retrievedKnowledge = null, knowledgeSource = "", intentTrace = null, agentPlan = null) {
   const sectionMap = {
     "口播脚本": { id: "oral", color: "#c4a77d" },
     "视频标题": { id: "title", color: "#a8b5a0" },
@@ -1436,6 +1448,13 @@ function renderResults(text, feishu = null) {
   currentRecord.id = feishu?.recordId || null;
   currentRecord.content = text;
   currentRecord.feishu = feishu;
+  currentRecord.retrievedKnowledge = retrievedKnowledge;
+  currentRecord.intentTrace = intentTrace;
+  currentRecord.agentPlan = agentPlan;
+
+  const knowledgeHtml = renderKnowledgePanel(retrievedKnowledge, knowledgeSource);
+  const intentHtml = renderIntentPanel(intentTrace);
+  const agentHtml = renderAgentPanel(agentPlan);
 
   const feishuHtml = feishu?.saved ? `
     <div class="feishu-result">
@@ -1467,6 +1486,9 @@ function renderResults(text, feishu = null) {
     </div>
 
     ${feishuHtml}
+    ${agentHtml}
+    ${intentHtml}
+    ${knowledgeHtml}
 
     ${blocks.map((b, i) => `
       <div class="result-block">
@@ -1481,6 +1503,123 @@ function renderResults(text, feishu = null) {
   `;
 
   document.getElementById("outputArea").innerHTML = html;
+}
+
+function renderAgentPanel(agentPlan) {
+  if (!agentPlan) return "";
+
+  const entries = [
+    { label: "Agent模式", value: agentPlan.agentMode || "未识别" },
+    { label: "检索策略", value: agentPlan.retrievalMode || "未识别" },
+    { label: "风险等级", value: agentPlan.riskMode || "未识别" },
+    { label: "输出目标", value: agentPlan.outputGoal || "未识别" },
+    { label: "执行备注", value: Array.isArray(agentPlan.planningNotes) && agentPlan.planningNotes.length ? agentPlan.planningNotes.join(" / ") : "无" }
+  ];
+
+  return `
+    <details class="intent-panel">
+      <summary>
+        <div>
+          <div class="intent-panel-title">Agent策略</div>
+          <div class="intent-panel-sub">用于查看这次内容生成被路由到哪种策略</div>
+        </div>
+      </summary>
+      <div class="intent-grid">
+        ${entries.map((entry) => `
+          <div class="intent-card">
+            <div class="intent-card-label">${escHtml(entry.label)}</div>
+            <div class="intent-card-value">${escHtml(entry.value)}</div>
+          </div>
+        `).join("")}
+      </div>
+    </details>
+  `;
+}
+
+function renderIntentPanel(intentTrace) {
+  if (!intentTrace) return "";
+
+  const entries = [
+    { label: "本次主轴", value: intentTrace.focus || "未识别" },
+    { label: "生成模式", value: intentTrace.generationMode || "未识别" },
+    { label: "任务类型", value: intentTrace.intentType || "未识别" },
+    { label: "输入完整度", value: intentTrace.inputCompleteness || "未识别" },
+    { label: "不要展开", value: intentTrace.negativeConstraints || "未识别明显约束" },
+    { label: "是否检索", value: intentTrace.shouldRetrieve ? "是，已进入知识检索" : "否，直接生成" }
+  ];
+
+  return `
+    <details class="intent-panel">
+      <summary>
+        <div>
+          <div class="intent-panel-title">本次任务理解</div>
+          <div class="intent-panel-sub">用于判断系统是否抓对了主轴、写法和约束</div>
+        </div>
+      </summary>
+      <div class="intent-grid">
+        ${entries.map((entry) => `
+          <div class="intent-card">
+            <div class="intent-card-label">${escHtml(entry.label)}</div>
+            <div class="intent-card-value">${escHtml(entry.value)}</div>
+          </div>
+        `).join("")}
+      </div>
+    </details>
+  `;
+}
+
+function renderKnowledgePanel(retrievedKnowledge, knowledgeSource = "") {
+  const docs = retrievedKnowledge?.documents || [];
+  const convs = retrievedKnowledge?.conversations || [];
+  if (!docs.length && !convs.length) return "";
+
+  return `
+    <div class="knowledge-panel">
+      <div class="knowledge-panel-header">
+        <div>
+          <div class="knowledge-panel-title">本次参考知识</div>
+          <div class="knowledge-panel-sub">${escHtml(knowledgeSource || "当前知识库")} · 页面输入主导本次生成，文档兜事实，对话补业务理解</div>
+        </div>
+      </div>
+      <div class="knowledge-groups">
+        <div class="knowledge-group">
+          <div class="knowledge-group-title">文档事实依据</div>
+          ${docs.length ? docs.map(renderKnowledgeItem).join("") : `<div class="knowledge-item-content">本次未召回文档类知识。</div>`}
+        </div>
+        <div class="knowledge-group">
+          <div class="knowledge-group-title">对话业务理解</div>
+          ${convs.length ? convs.map(renderKnowledgeItem).join("") : `<div class="knowledge-item-content">本次未召回对话类知识。</div>`}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderKnowledgeItem(item) {
+  const meta = [
+    item.sourceType,
+    item.statementType,
+    item.intentType,
+    item.decisionStatus,
+    item.sourceTimeRange
+  ].filter(Boolean).join(" · ");
+
+  const maxLen = item.sourceType === "conversation_evidence" ? 120 : 180;
+  const content = summarizeKnowledgeContent(item.content || "", maxLen);
+
+  return `
+    <div class="knowledge-item">
+      <div class="knowledge-item-title">${escHtml(item.title || "未命名资料")}</div>
+      <div class="knowledge-item-meta">${escHtml(meta || (item.sourceFile || ""))}</div>
+      <div class="knowledge-item-content">${escHtml(content)}</div>
+    </div>
+  `;
+}
+
+function summarizeKnowledgeContent(text, maxLen) {
+  const normalized = (text || "").replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLen) return normalized;
+  return normalized.slice(0, maxLen).trim() + "...";
 }
 
 // 保存到飞书
@@ -1498,7 +1637,7 @@ async function saveToFeishu() {
   btn.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></span>保存中...`;
 
   try {
-    const res = await fetch(CONFIG.API_URL + "/?action=save", {
+    const res = await fetch(CONFIG.API_URL + "/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1560,7 +1699,6 @@ function copyBlock(i) {
 }
 
 // 初始化
-initAuth();
 renderChips();
 // 设置初始激活状态
 document.querySelector('.section')?.classList.add('active');

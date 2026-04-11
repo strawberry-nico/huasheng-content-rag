@@ -1,3 +1,4 @@
+# 当前轻量 rerank 直接在 server/app.py 中实现，没有新增第三方依赖
 fastapi>=0.115.0
 uvicorn>=0.30.0
 numpy>=1.26.0
